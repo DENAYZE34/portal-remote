@@ -69,15 +69,7 @@ jobs:
         submodules: recursive
     - name: Set version
       shell: bash
-      run: 'sed -i ''s/^version = "1.5.0"/version = "1.5.${{ github.run_number }}"/'' Cargo.toml
-
-        perl -0pi -e ''s/(name = "rustdesk"
-
-        version = ")1\.5\.0"/${1}1.5.${{ github.run_number }}"/'' Cargo.lock
-
-        grep -m1 ''^version'' Cargo.toml
-
-        grep -A1 ''^name = "rustdesk"$'' Cargo.lock'
+      run: bash .github/scripts/set-version.sh ${{ github.run_number }}
     - name: Restore bridge files
       uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
       with:
