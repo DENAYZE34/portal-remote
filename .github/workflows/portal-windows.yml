@@ -71,11 +71,11 @@ jobs:
       shell: bash
       run: 'sed -i ''s/^version = "1.5.0"/version = "1.5.${{ github.run_number }}"/'' Cargo.toml
 
-        grep -m1 "^version" Cargo.toml
-
         perl -0pi -e ''s/(name = "rustdesk"
 
         version = ")1\.5\.0"/${1}1.5.${{ github.run_number }}"/'' Cargo.lock
+
+        grep -m1 ''^version'' Cargo.toml
 
         grep -A1 ''^name = "rustdesk"$'' Cargo.lock'
     - name: Restore bridge files
@@ -96,13 +96,8 @@ jobs:
         architecture: x64
     - name: Force arm64 Dart SDK + engine
       if: ${{ matrix.job.arch == 'aarch64' }}
-      run: "$flutterRoot = \"${{ steps.flutter.outputs['CACHE-PATH'] }}\"\nWrite-Host \"PROCESSOR_ARCHITECTURE=$env:PROCESSOR_ARCHITECTURE\"\nWrite-Host \"Flutter root: $flutterRoot\"\nRemove-Item -Force\
-        \ \"$flutterRoot\\bin\\cache\\engine-dart-sdk.stamp\" -ErrorAction SilentlyContinue\n& \"$flutterRoot\\bin\\internal\\update_dart_sdk.ps1\"\n# Confirm the Dart we ended up with is arm64 (\"on windows_arm64\"\
-        ); fail loudly if not.\n$dartVer = & \"$flutterRoot\\bin\\dart.bat\" --version 2>&1 | Out-String\nWrite-Host $dartVer\nif ($dartVer -notmatch \"windows_arm64\") {\n  Write-Error \"Expected an arm64\
-        \ Dart SDK but got: $dartVer\"\n  exit 1\n}\n& \"$flutterRoot\\bin\\flutter.bat\" precache --windows\n# Fail fast if precache pulled the wrong-arch Windows engine: an arm64 Dart should\n# fetch\
-        \ windows-arm64 engine artifacts. Bailing here saves the ~25min Rust build.\n$engineDir = \"$flutterRoot\\bin\\cache\\artifacts\\engine\"\nWrite-Host \"Engine artifacts present:\"\nGet-ChildItem\
-        \ $engineDir -Directory | Select-Object -ExpandProperty Name | Write-Host\nif (-not (Test-Path \"$engineDir\\windows-arm64-release\")) {\n  Write-Error \"Expected windows-arm64-release engine artifacts\
-        \ but they are missing (wrong-arch SDK).\"\n  exit 1\n}\n"
+      run: "$flutterRoot = \"${{ steps.flutter.outputs['CACHE-PATH'] }}\"\nWrite-Host \"PROCESSOR_ARCHITECTURE=$env:PROCESSOR_ARCHITECTURE\"\nWrite-Host \"Flutter root: $flutterRoot\"\nRemove-Item -Force \"$flutterRoot\\bin\\cache\\engine-dart-sdk.stamp\" -ErrorAction SilentlyContinue\n& \"$flutterRoot\\bin\\internal\\update_dart_sdk.ps1\"\n# Confirm the Dart we ended up with is arm64 (\"on windows_arm64\"); fail loudly if not.\n$dartVer = & \"$flutterRoot\\bin\\dart.bat\" --version 2>&1 | Out-String\nWrite-Host $dartVer\nif ($dartVer -notmatch \"windows_arm64\") {\n  Write-Error \"Expected an arm64 Dart SDK but got: $dartVer\"\n  exit 1\n}\n& \"$flutterRoot\\bin\\flutter.bat\" precache --windows\n# Fail fast if precache pulled the wrong-arch Windows engine: an arm64 Dart should\n# fetch windows-arm64 engine artifacts. Bailing here saves the ~25min Rust build.\n$engineDir = \"$flutterRoot\\bin\\cache\\artifacts\\engine\"\nWrite-Host \"Engine artifacts present:\"\nGet-ChildItem $engineDir\
+        \ -Directory | Select-Object -ExpandProperty Name | Write-Host\nif (-not (Test-Path \"$engineDir\\windows-arm64-release\")) {\n  Write-Error \"Expected windows-arm64-release engine artifacts but they are missing (wrong-arch SDK).\"\n  exit 1\n}\n"
     - name: Replace engine with rustdesk custom flutter engine
       if: ${{ matrix.job.arch == 'x86_64' }}
       run: 'flutter doctor -v
@@ -119,8 +114,7 @@ jobs:
     - name: Patch flutter
       if: ${{ matrix.job.arch == 'x86_64' }}
       shell: bash
-      run: "cp .github/patches/flutter_3.24.4_dropdown_menu_enableFilter.diff $(dirname $(dirname $(which flutter)))\ncd $(dirname $(dirname $(which flutter)))\nif [[ \"3.24.5\" == ${{env.FLUTTER_VERSION}}\
-        \ ]]; then\n  git apply flutter_3.24.4_dropdown_menu_enableFilter.diff\nfi\n"
+      run: "cp .github/patches/flutter_3.24.4_dropdown_menu_enableFilter.diff $(dirname $(dirname $(which flutter)))\ncd $(dirname $(dirname $(which flutter)))\nif [[ \"3.24.5\" == ${{env.FLUTTER_VERSION}} ]]; then\n  git apply flutter_3.24.4_dropdown_menu_enableFilter.diff\nfi\n"
     - name: Patch RustDesk sources for Flutter 3.44 (arm64)
       if: ${{ matrix.job.arch == 'aarch64' }}
       shell: bash
@@ -143,34 +137,20 @@ jobs:
     - name: Install vcpkg dependencies
       env:
         VCPKG_DEFAULT_HOST_TRIPLET: ${{ matrix.job.vcpkg-triplet }}
-      run: "if ! $VCPKG_ROOT/vcpkg \\\n  install \\\n  --triplet ${{ matrix.job.vcpkg-triplet }} \\\n  --x-install-root=\"$VCPKG_ROOT/installed\"; then\n  find \"${VCPKG_ROOT}/\" -name \"*.log\" | while\
-        \ read -r _1; do\n    echo \"$_1:\"\n    echo \"======\"\n    cat \"$_1\"\n    echo \"======\"\n    echo \"\"\n  done\n  exit 1\nfi\nhead -n 100 \"${VCPKG_ROOT}/buildtrees/ffmpeg/build-${{ matrix.job.vcpkg-triplet\
-        \ }}-rel-out.log\" || true\n"
+      run: "if ! $VCPKG_ROOT/vcpkg \\\n  install \\\n  --triplet ${{ matrix.job.vcpkg-triplet }} \\\n  --x-install-root=\"$VCPKG_ROOT/installed\"; then\n  find \"${VCPKG_ROOT}/\" -name \"*.log\" | while read -r _1; do\n    echo \"$_1:\"\n    echo \"======\"\n    cat \"$_1\"\n    echo \"======\"\n    echo \"\"\n  done\n  exit 1\nfi\nhead -n 100 \"${VCPKG_ROOT}/buildtrees/ffmpeg/build-${{ matrix.job.vcpkg-triplet }}-rel-out.log\" || true\n"
       shell: bash
     - name: Set SODIUM_LIB_DIR (arm64)
       if: ${{ matrix.job.arch == 'aarch64' }}
       shell: bash
       run: echo "SODIUM_LIB_DIR=$VCPKG_ROOT/installed/${{ matrix.job.vcpkg-triplet }}/lib" >> "$GITHUB_ENV"
     - name: Build rustdesk
-      run: "# Windows: build RustDesk\n# --hwcodec is shared by all Windows targets; per-target extras (e.g. --vram) come from the matrix\npython3 .\\build.py --portable --flutter --skip-portable-pack --hwcodec\
-        \ ${{ matrix.job.build-args }}\nmv ./flutter/build/windows/${{ matrix.job.flutter-arch }}/runner/Release ./rustdesk\nmv ./rustdesk/rustdesk.exe ./rustdesk/Portal.exe\n\n# Download usbmmidd_v2.zip\
-        \ and extract it to ./rustdesk\nInvoke-WebRequest -Uri https://github.com/rustdesk-org/rdev/releases/download/usbmmidd_v2/usbmmidd_v2.zip -OutFile usbmmidd_v2.zip\nExpand-Archive usbmmidd_v2.zip\
-        \ -DestinationPath .\nRemove-Item -Path usbmmidd_v2\\Win32 -Recurse\nRemove-Item -Path \"usbmmidd_v2\\deviceinstaller64.exe\", \"usbmmidd_v2\\deviceinstaller.exe\", \"usbmmidd_v2\\usbmmidd.bat\"\
-        \nmv -Force .\\usbmmidd_v2 ./rustdesk\n\n# Download printer driver files and extract them to ./rustdesk\ntry {\n  Invoke-WebRequest -Uri https://github.com/rustdesk/hbb_common/releases/download/driver/rustdesk_printer_driver_v4-1.4.zip\
-        \ -OutFile rustdesk_printer_driver_v4-1.4.zip\n  Invoke-WebRequest -Uri https://github.com/rustdesk/hbb_common/releases/download/driver/printer_driver_adapter.zip -OutFile printer_driver_adapter.zip\n\
-        \  Invoke-WebRequest -Uri https://github.com/rustdesk/hbb_common/releases/download/driver/sha256sums -OutFile sha256sums\n\n  # Check and move the files\n  $checksum_driver = (Select-String -Path\
-        \ .\\sha256sums -Pattern '^([a-fA-F0-9]{64}) \\*rustdesk_printer_driver_v4-1.4\\.zip$').Matches.Groups[1].Value\n  $downloadsum_driver = Get-FileHash -Path rustdesk_printer_driver_v4-1.4.zip -Algorithm\
-        \ SHA256\n  $checksum_adapter = (Select-String -Path .\\sha256sums -Pattern '^([a-fA-F0-9]{64}) \\*printer_driver_adapter\\.zip$').Matches.Groups[1].Value\n  $downloadsum_adapter = Get-FileHash\
-        \ -Path printer_driver_adapter.zip -Algorithm SHA256\n  if ($checksum_driver -eq $downloadsum_driver.Hash -and $checksum_adapter -eq $downloadsum_adapter.Hash) {\n      Write-Output \"rustdesk_printer_driver_v4-1.4,\
-        \ checksums match, extract the file.\"\n      Expand-Archive rustdesk_printer_driver_v4-1.4.zip -DestinationPath .\n      mkdir ./rustdesk/drivers\n      mv -Force .\\rustdesk_printer_driver_v4-1.4\
-        \ ./rustdesk/drivers/RustDeskPrinterDriver\n      Expand-Archive printer_driver_adapter.zip -DestinationPath .\n      mv -Force .\\printer_driver_adapter.dll ./rustdesk\n  } elseif ($checksum_driver\
-        \ -ne $downloadsum_driver.Hash) {\n      Write-Output \"rustdesk_printer_driver_v4-1.4, checksums do not match, ignore the file.\"\n  } else {\n      Write-Output \"printer_driver_adapter.dll, checksums\
-        \ do not match, ignore the file.\"\n  }\n} catch {\n    Write-Host \"Ingore the printer driver error.\"\n}\n"
+      run: "# Windows: build RustDesk\n# --hwcodec is shared by all Windows targets; per-target extras (e.g. --vram) come from the matrix\npython3 .\\build.py --portable --flutter --skip-portable-pack --hwcodec ${{ matrix.job.build-args }}\nmv ./flutter/build/windows/${{ matrix.job.flutter-arch }}/runner/Release ./rustdesk\nmv ./rustdesk/rustdesk.exe ./rustdesk/Portal.exe\n\n# Download usbmmidd_v2.zip and extract it to ./rustdesk\nInvoke-WebRequest -Uri https://github.com/rustdesk-org/rdev/releases/download/usbmmidd_v2/usbmmidd_v2.zip -OutFile usbmmidd_v2.zip\nExpand-Archive usbmmidd_v2.zip -DestinationPath .\nRemove-Item -Path usbmmidd_v2\\Win32 -Recurse\nRemove-Item -Path \"usbmmidd_v2\\deviceinstaller64.exe\", \"usbmmidd_v2\\deviceinstaller.exe\", \"usbmmidd_v2\\usbmmidd.bat\"\nmv -Force .\\usbmmidd_v2 ./rustdesk\n\n# Download printer driver files and extract them to ./rustdesk\ntry {\n  Invoke-WebRequest -Uri https://github.com/rustdesk/hbb_common/releases/download/driver/rustdesk_printer_driver_v4-1.4.zip\
+        \ -OutFile rustdesk_printer_driver_v4-1.4.zip\n  Invoke-WebRequest -Uri https://github.com/rustdesk/hbb_common/releases/download/driver/printer_driver_adapter.zip -OutFile printer_driver_adapter.zip\n  Invoke-WebRequest -Uri https://github.com/rustdesk/hbb_common/releases/download/driver/sha256sums -OutFile sha256sums\n\n  # Check and move the files\n  $checksum_driver = (Select-String -Path .\\sha256sums -Pattern '^([a-fA-F0-9]{64}) \\*rustdesk_printer_driver_v4-1.4\\.zip$').Matches.Groups[1].Value\n  $downloadsum_driver = Get-FileHash -Path rustdesk_printer_driver_v4-1.4.zip -Algorithm SHA256\n  $checksum_adapter = (Select-String -Path .\\sha256sums -Pattern '^([a-fA-F0-9]{64}) \\*printer_driver_adapter\\.zip$').Matches.Groups[1].Value\n  $downloadsum_adapter = Get-FileHash -Path printer_driver_adapter.zip -Algorithm SHA256\n  if ($checksum_driver -eq $downloadsum_driver.Hash -and $checksum_adapter -eq $downloadsum_adapter.Hash) {\n      Write-Output \"rustdesk_printer_driver_v4-1.4,\
+        \ checksums match, extract the file.\"\n      Expand-Archive rustdesk_printer_driver_v4-1.4.zip -DestinationPath .\n      mkdir ./rustdesk/drivers\n      mv -Force .\\rustdesk_printer_driver_v4-1.4 ./rustdesk/drivers/RustDeskPrinterDriver\n      Expand-Archive printer_driver_adapter.zip -DestinationPath .\n      mv -Force .\\printer_driver_adapter.dll ./rustdesk\n  } elseif ($checksum_driver -ne $downloadsum_driver.Hash) {\n      Write-Output \"rustdesk_printer_driver_v4-1.4, checksums do not match, ignore the file.\"\n  } else {\n      Write-Output \"printer_driver_adapter.dll, checksums do not match, ignore the file.\"\n  }\n} catch {\n    Write-Host \"Ingore the printer driver error.\"\n}\n"
     - name: find Runner.res
       continue-on-error: true
       shell: bash
-      run: "runner_res=$(find . -name \"Runner.res\");\nif [ \"$runner_res\" == \"\" ]; then\n  echo \"Runner.res: not found\";\nelse\n  echo \"Runner.res: $runner_res\";\n  cp $runner_res ./libs/portable/Runner.res;\n\
-        \  echo \"list ./libs/portable/Runner.res\";\n  ls -l ./libs/portable/Runner.res;\nfi\n"
+      run: "runner_res=$(find . -name \"Runner.res\");\nif [ \"$runner_res\" == \"\" ]; then\n  echo \"Runner.res: not found\";\nelse\n  echo \"Runner.res: $runner_res\";\n  cp $runner_res ./libs/portable/Runner.res;\n  echo \"list ./libs/portable/Runner.res\";\n  ls -l ./libs/portable/Runner.res;\nfi\n"
     - name: Download RustDeskTempTopMostWindow artifacts
       uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
       with:
