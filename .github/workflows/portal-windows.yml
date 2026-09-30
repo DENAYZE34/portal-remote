@@ -67,6 +67,11 @@ jobs:
       uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
       with:
         submodules: recursive
+    - name: Set version
+      shell: bash
+      run: 'sed -i ''s/^version = "1.5.0"/version = "1.5.${{ github.run_number }}"/'' Cargo.toml
+
+        grep -m1 "^version" Cargo.toml'
     - name: Restore bridge files
       uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
       with:
@@ -170,3 +175,27 @@ jobs:
       with:
         name: rustdesk-unsigned-windows-${{ matrix.job.arch }}
         path: rustdesk
+    - name: Build self-extracted executable
+      shell: bash
+      run: 'sed -i ''/dpiAware/d'' res/manifest.xml
+
+        pushd ./libs/portable
+
+        pip3 install -r requirements.txt
+
+        python3 ./generate.py -f ../../rustdesk/ -o . -e ../../rustdesk/Portal.exe
+
+        popd
+
+        mkdir -p ./SignOutput
+
+        mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/rustdesk-1.5.${{ github.run_number }}-x86_64.exe'
+    - name: Publish Release
+      uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
+      with:
+        tag_name: 1.5.${{ github.run_number }}
+        name: Portal 1.5.${{ github.run_number }}
+        prerelease: false
+        files: ./SignOutput/rustdesk-*.exe
+    permissions:
+      contents: write
