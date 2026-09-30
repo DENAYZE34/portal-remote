@@ -113,49 +113,11 @@ jobs:
       shell: bash
       run: 'cd flutter/build/ios/archive/Runner.xcarchive/Products/Applications
 
-        APP=Runner.app
+        ls Runner.app | grep -i -E "Assets.car|AppIcon" || true
 
-        ICONS="$GITHUB_WORKSPACE/flutter/ios/Runner/Assets.xcassets/AppIcon.appiconset"
+        mkdir -p /tmp/ipa/Payload && cp -R Runner.app /tmp/ipa/Payload/
 
-        cp "$ICONS/Icon-App-60x60@2x.png" "$APP/AppIcon60x60@2x.png"
-
-        cp "$ICONS/Icon-App-60x60@3x.png" "$APP/AppIcon60x60@3x.png"
-
-        cp "$ICONS/Icon-App-76x76@2x.png" "$APP/AppIcon76x76@2x~ipad.png"
-
-        cp "$ICONS/Icon-App-83.5x83.5@2x.png" "$APP/AppIcon83.5x83.5@2x~ipad.png"
-
-        PB=/usr/libexec/PlistBuddy
-
-        P="$APP/Info.plist"
-
-        $PB -c "Add :CFBundleIcons dict" "$P"
-
-        $PB -c "Add :CFBundleIcons:CFBundlePrimaryIcon dict" "$P"
-
-        $PB -c "Add :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconFiles array" "$P"
-
-        $PB -c "Add :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconFiles:0 string AppIcon60x60" "$P"
-
-        $PB -c "Add :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconName string AppIcon" "$P"
-
-        $PB -c "Add :CFBundleIcons~ipad dict" "$P"
-
-        $PB -c "Add :CFBundleIcons~ipad:CFBundlePrimaryIcon dict" "$P"
-
-        $PB -c "Add :CFBundleIcons~ipad:CFBundlePrimaryIcon:CFBundleIconFiles array" "$P"
-
-        $PB -c "Add :CFBundleIcons~ipad:CFBundlePrimaryIcon:CFBundleIconFiles:0 string AppIcon76x76" "$P"
-
-        $PB -c "Add :CFBundleIcons~ipad:CFBundlePrimaryIcon:CFBundleIconFiles:1 string AppIcon83.5x83.5" "$P"
-
-        $PB -c "Add :CFBundleIcons~ipad:CFBundlePrimaryIcon:CFBundleIconName string AppIcon" "$P"
-
-        mkdir -p /tmp/ipa/Payload && cp -R "$APP" /tmp/ipa/Payload/
-
-        cd /tmp/ipa && zip -qry "$GITHUB_WORKSPACE/Portal-unsigned.ipa" Payload
-
-        unzip -l "$GITHUB_WORKSPACE/Portal-unsigned.ipa" | grep -i AppIcon'
+        cd /tmp/ipa && zip -qry "$GITHUB_WORKSPACE/Portal-unsigned.ipa" Payload'
     - name: Upload ipa
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
