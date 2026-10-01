@@ -3731,9 +3731,10 @@ Color? disabledTextColor(BuildContext context, bool enabled) {
 }
 
 Widget loadPowered(BuildContext context) {
-  if (bind.mainGetBuildinOption(key: "hide-powered-by-me") == 'Y') {
+  if (true) {
     return SizedBox.shrink();
   }
+  // ignore: dead_code
   return MouseRegion(
     cursor: SystemMouseCursors.click,
     child: GestureDetector(
