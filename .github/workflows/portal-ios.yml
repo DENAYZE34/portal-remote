@@ -60,17 +60,14 @@ jobs:
         channel: stable
         flutter-version: ${{ env.FLUTTER_VERSION }}
     - name: Patch flutter
-      run: "cd $(dirname $(dirname $(which flutter)))\nif [[ \"3.24.5\" == ${{env.FLUTTER_VERSION}} ]]; then\n  git apply ${{ github.workspace }}/.github/patches/flutter_3.24.4_dropdown_menu_enableFilter.diff\n\
-        fi\n"
+      run: "cd $(dirname $(dirname $(which flutter)))\nif [[ \"3.24.5\" == ${{env.FLUTTER_VERSION}} ]]; then\n  git apply ${{ github.workspace }}/.github/patches/flutter_3.24.4_dropdown_menu_enableFilter.diff\nfi\n"
     - name: Setup vcpkg with Github Actions binary cache
       uses: lukka/run-vcpkg@b1a0dd252f06b9e25b3c022a9a03bd7a427fb6a2
       with:
         vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
         doNotCache: false
     - name: Install vcpkg dependencies
-      run: "if ! $VCPKG_ROOT/vcpkg \\\n  install \\\n  --triplet ${{ matrix.job.vcpkg-triplet }} \\\n  --x-install-root=\"$VCPKG_ROOT/installed\"; then\n  find \"${VCPKG_ROOT}/\" -name \"*.log\" | while\
-        \ read -r _1; do\n    echo \"$_1:\"\n    echo \"======\"\n    cat \"$_1\"\n    echo \"======\"\n    echo \"\"\n  done\n  exit 1\nfi\nhead -n 100 \"${VCPKG_ROOT}/buildtrees/ffmpeg/build-${{ matrix.job.vcpkg-triplet\
-        \ }}-rel-out.log\" || true\n"
+      run: "if ! $VCPKG_ROOT/vcpkg \\\n  install \\\n  --triplet ${{ matrix.job.vcpkg-triplet }} \\\n  --x-install-root=\"$VCPKG_ROOT/installed\"; then\n  find \"${VCPKG_ROOT}/\" -name \"*.log\" | while read -r _1; do\n    echo \"$_1:\"\n    echo \"======\"\n    cat \"$_1\"\n    echo \"======\"\n    echo \"\"\n  done\n  exit 1\nfi\nhead -n 100 \"${VCPKG_ROOT}/buildtrees/ffmpeg/build-${{ matrix.job.vcpkg-triplet }}-rel-out.log\" || true\n"
       shell: bash
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
@@ -106,7 +103,7 @@ jobs:
 
         # for easy debugging
 
-        flutter build ipa --release --no-codesign
+        flutter build ipa --release --no-codesign --build-name 1.5.${{ github.run_number }} --build-number ${{ github.run_number }}
 
         '
     - name: Package unsigned ipa
@@ -123,3 +120,18 @@ jobs:
       with:
         name: portal-ios-unsigned
         path: Portal-unsigned.ipa
+    - name: Write SideStore source
+      shell: bash
+      run: "SIZE=$(stat -f%z Portal-unsigned.ipa)\nDATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)\ncat > apps.json <<EOF\n{\n  \"name\": \"Portal\",\n  \"identifier\": \"com.portalremote.source\",\n  \"apps\": [{\n    \"name\": \"Portal\",\n    \"bundleIdentifier\": \"com.portalremote.app\",\n    \"developerName\": \"Portal\",\n    \"subtitle\": \"Remote desktop\",\n    \"localizedDescription\": \"Portal remote desktop client\",\n    \"iconURL\": \"https://raw.githubusercontent.com/DENAYZE34/portal-remote/main/res/icon.png\",\n    \"version\": \"1.5.${{ github.run_number }}\",\n    \"versionDate\": \"$DATE\",\n    \"downloadURL\": \"https://github.com/DENAYZE34/portal-remote/releases/download/ios-latest/Portal-unsigned.ipa\",\n    \"size\": $SIZE\n  }]\n}\nEOF\ncat apps.json"
+    - name: Publish iOS release
+      uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
+      with:
+        tag_name: ios-latest
+        name: Portal iOS (latest)
+        prerelease: true
+        make_latest: 'false'
+        files: 'Portal-unsigned.ipa
+
+          apps.json'
+    permissions:
+      contents: write
