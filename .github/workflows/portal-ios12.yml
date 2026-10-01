@@ -58,7 +58,6 @@ jobs:
       run: |
         sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = 13.0/IPHONEOS_DEPLOYMENT_TARGET = 12.0/' flutter/ios/Runner.xcodeproj/project.pbxproj
         sed -i '' "s/platform :ios, '13.0'/platform :ios, '12.0'/" flutter/ios/Podfile
-        echo "IPHONEOS_DEPLOYMENT_TARGET=12.0" >> $GITHUB_ENV
     - name: Check branding
       run: bash .github/scripts/check-branding.sh
     - name: Install flutter
