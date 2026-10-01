@@ -54,6 +54,8 @@ jobs:
       uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
       with:
         submodules: recursive
+    - name: Check branding
+      run: bash .github/scripts/check-branding.sh
     - name: Install flutter
       uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
       with:

@@ -67,6 +67,8 @@ jobs:
       uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
       with:
         submodules: recursive
+    - name: Check branding
+      run: bash .github/scripts/check-branding.sh
     - name: Set version
       shell: bash
       run: bash .github/scripts/set-version.sh ${{ github.run_number }}
