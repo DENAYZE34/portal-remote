@@ -93,7 +93,7 @@ BEGIN
             VALUE "FileDescription", "Portal Remote Desktop" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "rustdesk" "\0"
-            VALUE "LegalCopyright", "Portal. Based on RustDesk (AGPL-3.0)." "\0"
+            VALUE "LegalCopyright", "Portal" "\0"
             VALUE "OriginalFilename", "rustdesk.exe" "\0"
             VALUE "ProductName", "Portal" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
