@@ -182,7 +182,7 @@ fn check_update(manually: bool) -> ResultType<()> {
     }
     #[cfg(target_os = "windows")]
     let update_msi = crate::platform::is_msi_installed()? && !crate::is_custom_client();
-    if !(manually || config::Config::get_bool_option(keys::OPTION_ALLOW_AUTO_UPDATE)) {
+    if !(manually || config::Config::get_option(keys::OPTION_ALLOW_AUTO_UPDATE) != "N") {
         return Ok(());
     }
     if do_check_software_update().is_err() {
@@ -205,7 +205,7 @@ fn check_update(manually: bool) -> ResultType<()> {
                 );
             };
             format!(
-                "{}/rustdesk-{}-{}.{}",
+                "{}/Portal-setup-{}-{}.{}",
                 download_url,
                 version,
                 arch,

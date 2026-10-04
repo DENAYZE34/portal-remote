@@ -10,4 +10,5 @@ grep -q "offstage: true || !(!_svcStopped.value" flutter/lib/desktop/pages/conne
 [ -f flutter/assets/icon.png ] || { echo no-portal-icon; fail=1; }
 grep -qi "rustdesk|purslane" flutter/android/app/src/main/res/values/strings.xml && { echo "RustDesk in Android strings"; fail=1; }
 grep -qi "LegalCopyright.*rustdesk|Purslane" flutter/windows/runner/Runner.rc flutter/lib/desktop/pages/desktop_setting_page.dart && { echo "RustDesk/Purslane in copyright"; fail=1; }
+grep -q "Portal-setup-{}-{}.{}" src/updater.rs || { echo "updater asset name != release asset"; fail=1; }
 exit $fail

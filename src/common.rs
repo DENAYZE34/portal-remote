@@ -1028,6 +1028,9 @@ pub fn check_software_update() {
 // Because the url is always `https://api.rustdesk.com/version/latest`.
 #[tokio::main(flavor = "current_thread")]
 pub async fn do_check_software_update() -> hbb_common::ResultType<()> {
+    // Portal: mobile builds are installed by hand, no update banner.
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    return Ok(());
     let url = "https://api.github.com/repos/DENAYZE34/portal-remote/releases/latest".to_owned();
     let proxy_conf = Config::get_socks();
     let tls_url = get_url_for_tls(&url, &proxy_conf);
