@@ -5,9 +5,13 @@ import 'dart:typed_data';
 
 import 'package:record/record.dart';
 
+import 'cert_pin.dart';
 import 'deepgram_transcript.dart';
 
-const String _kDeepgramKey = String.fromEnvironment('DEEPGRAM_API_KEY');
+// Token proxy (server/dg-proxy): the Deepgram key lives only on the server.
+const String _kProxyUrl = String.fromEnvironment('PORTAL_DG_URL');
+const String _kProxySecret = String.fromEnvironment('PORTAL_DG_SECRET');
+const String _kProxyFingerprint = String.fromEnvironment('PORTAL_DG_FP');
 const String _kDeepgramLanguage =
     String.fromEnvironment('DEEPGRAM_LANGUAGE', defaultValue: 'multi');
 const String _kDeepgramModel =
@@ -29,16 +33,45 @@ class DeepgramDictation {
   Completer<void>? _flushed;
   bool _active = false;
 
-  static bool get hasKey => _kDeepgramKey.isNotEmpty;
+  static bool get configured =>
+      _kProxyUrl.isNotEmpty &&
+      _kProxySecret.isNotEmpty &&
+      _kProxyFingerprint.isNotEmpty;
 
   bool get active => _active;
+
+  Future<String> _fetchToken() async {
+    final client = HttpClient()
+      ..connectionTimeout = const Duration(seconds: 5)
+      ..badCertificateCallback = (X509Certificate cert, String host, int port) =>
+          certMatches(cert.der, _kProxyFingerprint);
+    try {
+      final req = await client.getUrl(Uri.parse(_kProxyUrl));
+      req.headers.set('X-Portal-Secret', _kProxySecret);
+      final resp = await req.close().timeout(const Duration(seconds: 8));
+      if (resp.statusCode != 200) {
+        throw HttpException('token proxy status ${resp.statusCode}');
+      }
+      final body = await resp.transform(utf8.decoder).join();
+      return (jsonDecode(body) as Map<String, dynamic>)['access_token']
+          as String;
+    } finally {
+      client.close(force: true);
+    }
+  }
 
   /// Returns an error message, or null when recording started.
   Future<String?> start() async {
     if (_active) return null;
-    if (!hasKey) return 'Deepgram key is not built into this app';
+    if (!configured) return 'Voice proxy is not configured in this build';
     if (!await _recorder.hasPermission()) return 'Microphone permission denied';
     _transcript.reset();
+    final String token;
+    try {
+      token = await _fetchToken();
+    } catch (e) {
+      return 'Voice server unreachable';
+    }
     try {
       final uri = Uri.parse('wss://api.deepgram.com/v1/listen').replace(
         queryParameters: {
@@ -54,7 +87,7 @@ class DeepgramDictation {
         },
       );
       _socket = await WebSocket.connect(uri.toString(), headers: {
-        'Authorization': 'Token $_kDeepgramKey',
+        'Authorization': 'Bearer $token',
       }).timeout(const Duration(seconds: 6));
     } catch (e) {
       _socket = null;

@@ -5,6 +5,7 @@ name: Portal check
     paths:
       - flutter/lib/mobile/voice/**
       - flutter/test/deepgram_transcript_test.dart
+      - flutter/test/cert_pin_test.dart
       - .github/workflows/portal-check.yml
 jobs:
   voice-tests:
@@ -22,7 +23,7 @@ jobs:
         run: flutter pub get
       - name: Analyze voice code
         working-directory: flutter
-        run: flutter analyze lib/mobile/voice test/deepgram_transcript_test.dart
+        run: flutter analyze lib/mobile/voice test/deepgram_transcript_test.dart test/cert_pin_test.dart
       - name: Run voice tests
         working-directory: flutter
-        run: flutter test --timeout 60s test/deepgram_transcript_test.dart
+        run: flutter test --timeout 60s test/deepgram_transcript_test.dart test/cert_pin_test.dart
