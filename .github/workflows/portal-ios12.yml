@@ -109,7 +109,7 @@ jobs:
 
         # for easy debugging
 
-        flutter build ipa --release --no-codesign --build-name 1.5.${{ github.run_number }} --build-number ${{ github.run_number }}
+        flutter build ipa --release --no-codesign --build-name 1.5.${{ github.run_number }} --build-number ${{ github.run_number }} "--dart-define=DEEPGRAM_API_KEY=${{ secrets.DEEPGRAM_API_KEY }}"
 
         '
     - name: Package unsigned ipa

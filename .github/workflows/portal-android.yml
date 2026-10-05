@@ -224,7 +224,7 @@ jobs:
               cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/librustdesk.so
               # build flutter
               pushd flutter
-              flutter build apk "--${{ matrix.job.reltype }}" --target-platform android-arm64 --split-per-abi
+              flutter build apk "--${{ matrix.job.reltype }}" --target-platform android-arm64 --split-per-abi "--dart-define=DEEPGRAM_API_KEY=${{ secrets.DEEPGRAM_API_KEY }}"
               mv build/app/outputs/flutter-apk/app-arm64-v8a-${{ matrix.job.reltype }}.apk ../rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk
             ;;
             armv7-linux-androideabi)

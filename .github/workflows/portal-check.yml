@@ -1,0 +1,28 @@
+name: Portal check
+'on':
+  workflow_dispatch: null
+  push:
+    paths:
+      - flutter/lib/mobile/voice/**
+      - flutter/test/deepgram_transcript_test.dart
+      - .github/workflows/portal-check.yml
+jobs:
+  voice-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Install flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          channel: stable
+          flutter-version: 3.24.5
+      - name: Get packages
+        working-directory: flutter
+        run: flutter pub get
+      - name: Analyze voice code
+        working-directory: flutter
+        run: flutter analyze lib/mobile/voice test/deepgram_transcript_test.dart
+      - name: Run voice tests
+        working-directory: flutter
+        run: flutter test --timeout 60s test/deepgram_transcript_test.dart
