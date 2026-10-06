@@ -37,7 +37,7 @@ const String kRingLocked = 'more';
 const int kRingMax = 9;
 
 /// Keys of the bottom panel, as sent to the PC (`sessionInputKey` names).
-const List<String> kPanelKeys = [
+final List<String> kPanelKeys = [
   'VK_ESCAPE',
   'VK_TAB',
   'VK_BACK',

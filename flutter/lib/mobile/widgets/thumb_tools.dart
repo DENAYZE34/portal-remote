@@ -274,8 +274,12 @@ class _ThumbToolsState extends State<ThumbTools> {
               setState(() => _ringOpen = false);
               _micDown();
             }
-            ..onLongPressEnd = (_) => _micUp()
-            ..onLongPressCancel = _micUp,
+            ..onLongPressEnd = (_) {
+              _micUp();
+            }
+            ..onLongPressCancel = () {
+              _micUp();
+            },
         ),
         PanGestureRecognizer:
             GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
