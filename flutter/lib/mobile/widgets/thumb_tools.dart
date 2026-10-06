@@ -334,24 +334,12 @@ class _ThumbToolsState extends State<ThumbTools> {
   }
 
   static const Map<String, (IconData, String)> _look = {
-    'mic': (Icons.mic, 'Голос'),
     'rclick': (Icons.mouse, 'Правый клик'),
     'copy': (Icons.copy, 'Копировать'),
     'paste': (Icons.paste, 'Вставить'),
-    'cut': (Icons.content_cut, 'Вырезать'),
-    'undo': (Icons.undo, 'Отмена'),
-    'all': (Icons.select_all, 'Выделить всё'),
     'enter': (Icons.keyboard_return, 'Enter'),
-    'esc': (Icons.close, 'Esc'),
-    'tab': (Icons.keyboard_tab, 'Tab'),
-    'bksp': (Icons.backspace_outlined, 'Backspace'),
-    'del': (Icons.delete_outline, 'Delete'),
     'home': (Icons.first_page, 'Home'),
     'end': (Icons.last_page, 'End'),
-    'left': (Icons.arrow_back, 'Влево'),
-    'up': (Icons.arrow_upward, 'Вверх'),
-    'down': (Icons.arrow_downward, 'Вниз'),
-    'right': (Icons.arrow_forward, 'Вправо'),
     'more': (Icons.more_horiz, 'Ещё'),
   };
 
@@ -363,34 +351,12 @@ class _ThumbToolsState extends State<ThumbTools> {
         _chord('VK_C');
       case 'paste':
         _chord('VK_V');
-      case 'cut':
-        _chord('VK_X');
-      case 'undo':
-        _chord('VK_Z');
-      case 'all':
-        _chord('VK_A');
       case 'enter':
         _key('VK_RETURN');
-      case 'esc':
-        _key('VK_ESCAPE');
-      case 'tab':
-        _key('VK_TAB');
-      case 'bksp':
-        _key('VK_BACK');
-      case 'del':
-        _key('VK_DELETE');
       case 'home':
         _key('VK_HOME');
       case 'end':
         _key('VK_END');
-      case 'left':
-        _key('VK_LEFT');
-      case 'up':
-        _key('VK_UP');
-      case 'down':
-        _key('VK_DOWN');
-      case 'right':
-        _key('VK_RIGHT');
       case 'more':
         setState(() {
           _panelOpen = !_panelOpen;
@@ -403,9 +369,7 @@ class _ThumbToolsState extends State<ThumbTools> {
   List<Widget> _ringItems() {
     return [
       for (final id in _ring)
-        id == 'mic'
-            ? _micButton()
-            : _ringButton(_look[id]!.$1, () => _runAction(id),
+        _ringButton(_look[id]!.$1, () => _runAction(id),
                 onLongPress: !canRemove(id)
                     ? null
                     : () {
@@ -491,24 +455,6 @@ class _ThumbToolsState extends State<ThumbTools> {
           width: _item,
           height: _item,
           child: Icon(icon, color: Colors.white, size: 24),
-        ),
-      ),
-    );
-  }
-
-  Widget _micButton() {
-    return Listener(
-      onPointerDown: (_) => _micDown(),
-      onPointerUp: (_) => _micUp(),
-      onPointerCancel: (_) => _micUp(),
-      child: Material(
-        color: _recording ? Colors.redAccent : MyTheme.accent80,
-        shape: const CircleBorder(),
-        elevation: 4,
-        child: const SizedBox(
-          width: _item,
-          height: _item,
-          child: Icon(Icons.mic, color: Colors.white, size: 24),
         ),
       ),
     );

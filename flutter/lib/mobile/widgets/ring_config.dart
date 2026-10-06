@@ -2,29 +2,16 @@ import 'dart:convert';
 
 /// Ids of the actions a ring button can have.
 const List<String> kRingCatalog = [
-  'mic',
   'rclick',
   'copy',
   'paste',
-  'cut',
-  'undo',
-  'all',
   'enter',
-  'esc',
-  'tab',
-  'bksp',
-  'del',
   'home',
   'end',
-  'left',
-  'up',
-  'down',
-  'right',
   'more',
 ];
 
 const List<String> kRingDefault = [
-  'mic',
   'rclick',
   'copy',
   'paste',
@@ -34,7 +21,7 @@ const List<String> kRingDefault = [
 
 /// "More" opens the key panel; without it the panel is unreachable.
 const String kRingLocked = 'more';
-const int kRingMax = 9;
+const int kRingMax = 7;
 
 /// Keys of the bottom panel, as sent to the PC (`sessionInputKey` names).
 final List<String> kPanelKeys = [

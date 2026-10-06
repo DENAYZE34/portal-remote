@@ -43,16 +43,16 @@ void main() {
   test('ring: "more" cannot be removed or replaced and is restored', () {
     expect(canRemove('more'), isFalse);
     expect(removeAction(kRingDefault, 'more'), kRingDefault);
-    expect(replaceAction(kRingDefault, 'more', 'esc'), kRingDefault);
+    expect(replaceAction(kRingDefault, 'more', 'home'), kRingDefault);
     expect(parseRing(encodeRing(['copy', 'paste'])), ['copy', 'paste', 'more']);
   });
 
   test('ring: delete, replace and add are saved and restored', () {
     var ring = removeAction(kRingDefault, 'copy');
     expect(ring.contains('copy'), isFalse);
-    ring = replaceAction(ring, 'paste', 'esc');
-    ring = addAction(ring, 'tab');
-    expect(ring, ['mic', 'rclick', 'esc', 'enter', 'tab', 'more']);
+    ring = replaceAction(ring, 'paste', 'home');
+    ring = addAction(ring, 'end');
+    expect(ring, ['rclick', 'home', 'enter', 'end', 'more']);
     expect(parseRing(encodeRing(ring)), ring);
   });
 

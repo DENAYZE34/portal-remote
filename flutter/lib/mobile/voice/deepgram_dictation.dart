@@ -18,7 +18,6 @@ const String _kDeepgramModel =
 /// Languages offered in the panel: Deepgram code and label.
 const Map<String, String> kDictationLanguages = {
   'ru': 'RU',
-  'multi': 'Auto',
   'en': 'EN',
 };
 
