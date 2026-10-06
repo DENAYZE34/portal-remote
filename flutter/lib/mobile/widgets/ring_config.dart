@@ -42,15 +42,15 @@ final List<String> kPanelKeys = [
   'VK_TAB',
   'VK_BACK',
   'VK_DELETE',
-  'VK_RETURN',
-  'VK_HOME',
-  'VK_END',
   'VK_LEFT',
   'VK_UP',
   'VK_DOWN',
   'VK_RIGHT',
   for (var i = 1; i <= 12; i++) 'VK_F$i',
 ];
+
+/// Keys reachable only from ring buttons (Enter, Home, End).
+const List<String> kRingKeys = ['VK_RETURN', 'VK_HOME', 'VK_END'];
 
 /// Letters used with Ctrl (Cmd on Mac) by the panel and the ring.
 const List<String> kChordKeys = ['VK_C', 'VK_V', 'VK_X', 'VK_Z', 'VK_A'];

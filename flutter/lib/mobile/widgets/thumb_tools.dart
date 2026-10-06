@@ -557,9 +557,6 @@ class _ThumbToolsState extends State<ThumbTools> {
         _keyBtn('Tab', () => _key('VK_TAB')),
         _keyBtn('⌫', () => _key('VK_BACK')),
         _keyBtn('Del', () => _key('VK_DELETE')),
-        _keyBtn('Enter', () => _key('VK_RETURN')),
-        _keyBtn('Home', () => _key('VK_HOME')),
-        _keyBtn('End', () => _key('VK_END')),
       ]),
       Wrap(alignment: WrapAlignment.center, children: [
         _modBtn('Ctrl', _Mod.ctrl),

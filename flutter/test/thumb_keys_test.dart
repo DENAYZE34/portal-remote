@@ -11,7 +11,7 @@ void main() {
         .allMatches(src)
         .map((m) => m.group(1))
         .toSet();
-    for (final k in [...kPanelKeys, ...kChordKeys]) {
+    for (final k in [...kPanelKeys, ...kChordKeys, ...kRingKeys]) {
       expect(names.contains(k), isTrue, reason: '$k missing from KEY_MAP');
     }
   });
@@ -20,7 +20,6 @@ void main() {
     for (final k in [
       'VK_ESCAPE',
       'VK_TAB',
-      'VK_RETURN',
       'VK_BACK',
       'VK_DELETE',
       'VK_LEFT',
