@@ -4,6 +4,8 @@ import 'dart:convert';
 const List<String> kRingCatalog = [
   'scrollup',
   'scrolldown',
+  'scrollleft',
+  'scrollright',
   'rclick',
   'copy',
   'paste',
@@ -16,6 +18,8 @@ const List<String> kRingCatalog = [
 const List<String> kRingDefault = [
   'scrollup',
   'scrolldown',
+  'scrollleft',
+  'scrollright',
   'rclick',
   'copy',
   'paste',
@@ -25,7 +29,7 @@ const List<String> kRingDefault = [
 
 /// "More" opens the key panel; without it the panel is unreachable.
 const String kRingLocked = 'more';
-const int kRingMax = 9;
+const int kRingMax = 11;
 
 /// Keys of the bottom panel, as sent to the PC (`sessionInputKey` names).
 final List<String> kPanelKeys = [
