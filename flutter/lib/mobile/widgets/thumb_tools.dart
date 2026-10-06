@@ -32,6 +32,7 @@ class _ThumbToolsState extends State<ThumbTools> {
 
   Offset? _pos;
   bool _ringOpen = false;
+  String? _editId;
   bool _panelOpen = false;
   bool _fnRow = false;
   bool _recording = false;
@@ -211,6 +212,25 @@ class _ThumbToolsState extends State<ThumbTools> {
         final c = hubCenter + Offset(math.cos(a), math.sin(a)) * _radius;
         final p = _clamp(c - const Offset(_item / 2, _item / 2), size);
         children.add(Positioned(left: p.dx, top: p.dy, child: items[i]));
+        if (i < _ring.length && _ring[i] == _editId) {
+          final id = _ring[i];
+          final above = p.dy > 100;
+          final dy = above ? p.dy - 46 : p.dy + _item + 6;
+          children.add(Positioned(
+            left: p.dx - 24,
+            top: dy,
+            child: _editIcon(Icons.swap_horiz, Colors.blueGrey,
+                () => _replace(id)),
+          ));
+          if (canRemove(id)) {
+            children.add(Positioned(
+              left: p.dx + _item - 16,
+              top: dy,
+              child: _editIcon(
+                  Icons.delete_outline, Colors.redAccent, () => _delete(id)),
+            ));
+          }
+        }
       }
     }
 
@@ -262,7 +282,10 @@ class _ThumbToolsState extends State<ThumbTools> {
           () => TapGestureRecognizer(),
           (g) => g.onTap = () {
             HapticFeedback.selectionClick();
-            setState(() => _ringOpen = !_ringOpen);
+            setState(() {
+              _ringOpen = !_ringOpen;
+              _editId = null;
+            });
           },
         ),
         LongPressGestureRecognizer:
@@ -383,7 +406,12 @@ class _ThumbToolsState extends State<ThumbTools> {
         id == 'mic'
             ? _micButton()
             : _ringButton(_look[id]!.$1, () => _runAction(id),
-                onLongPress: () => _editMenu(id)),
+                onLongPress: !canRemove(id)
+                    ? null
+                    : () {
+                        HapticFeedback.mediumImpact();
+                        setState(() => _editId = id);
+                      }),
       if (canAdd(_ring) && availableToAdd(_ring).isNotEmpty)
         _ringButton(Icons.add, _addMenu),
     ];
@@ -393,22 +421,21 @@ class _ThumbToolsState extends State<ThumbTools> {
     return showModalBottomSheet<String>(
       context: context,
       builder: (ctx) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Text(title,
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w600)),
-            ),
-            for (final id in ids)
-              ListTile(
-                leading: Icon(_look[id]!.$1),
-                title: Text(_look[id]!.$2),
-                onTap: () => Navigator.pop(ctx, id),
-              ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Wrap(
+            spacing: 14,
+            runSpacing: 14,
+            alignment: WrapAlignment.center,
+            children: [
+              for (final id in ids)
+                IconButton.filledTonal(
+                  iconSize: 28,
+                  icon: Icon(_look[id]!.$1),
+                  onPressed: () => Navigator.pop(ctx, id),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -419,38 +446,32 @@ class _ThumbToolsState extends State<ThumbTools> {
     if (id != null) _setRing(addAction(_ring, id));
   }
 
-  Future<void> _editMenu(String id) async {
-    HapticFeedback.mediumImpact();
-    final choice = await showModalBottomSheet<String>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          ListTile(
-            leading: Icon(_look[id]!.$1),
-            title: Text(_look[id]!.$2),
-          ),
-          ListTile(
-            leading: const Icon(Icons.swap_horiz),
-            title: const Text('Заменить'),
-            enabled: id != kRingLocked,
-            onTap: () => Navigator.pop(ctx, 'replace'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.delete_outline),
-            title: Text(
-                canRemove(id) ? 'Удалить' : 'Удалить нельзя: открывает панель'),
-            enabled: canRemove(id),
-            onTap: () => Navigator.pop(ctx, 'delete'),
-          ),
-        ]),
+  Future<void> _replace(String id) async {
+    setState(() => _editId = null);
+    final to = await _pickAction('', availableToAdd(_ring));
+    if (to != null) _setRing(replaceAction(_ring, id, to));
+  }
+
+  void _delete(String id) {
+    setState(() => _editId = null);
+    _setRing(removeAction(_ring, id));
+  }
+
+  Widget _editIcon(IconData icon, Color color, VoidCallback onTap) {
+    return Material(
+      color: color,
+      shape: const CircleBorder(),
+      elevation: 6,
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: Icon(icon, color: Colors.white, size: 22),
+        ),
       ),
     );
-    if (choice == 'delete') {
-      _setRing(removeAction(_ring, id));
-    } else if (choice == 'replace') {
-      final to = await _pickAction('Заменить на', availableToAdd(_ring));
-      if (to != null) _setRing(replaceAction(_ring, id, to));
-    }
   }
 
   Widget _ringButton(IconData icon, VoidCallback onTap,
