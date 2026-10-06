@@ -405,7 +405,7 @@ class _ThumbToolsState extends State<ThumbTools> {
     _scrollTimer?.cancel();
     var ticks = 0;
     void fire() {
-      final k = 1 + math.min(ticks ~/ 8, 4);
+      final int k = 1 + math.min(ticks ~/ 8, 4).toInt();
       if (dir.$1 == 0) {
         _im.scroll(dir.$2 * k);
       } else {
