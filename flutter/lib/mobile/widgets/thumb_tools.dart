@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -36,6 +37,7 @@ class _ThumbToolsState extends State<ThumbTools> {
   bool _panelOpen = false;
   bool _fnRow = false;
   bool _recording = false;
+  Timer? _scrollTimer;
   String _bubble = '';
 
   // 0 = off, 1 = next key only, 2 = locked.
@@ -85,6 +87,7 @@ class _ThumbToolsState extends State<ThumbTools> {
   @override
   void dispose() {
     _resetMods();
+    _scrollTimer?.cancel();
     _dictation.dispose();
     super.dispose();
   }
@@ -334,6 +337,8 @@ class _ThumbToolsState extends State<ThumbTools> {
   }
 
   static const Map<String, (IconData, String)> _look = {
+    'scrollup': (Icons.keyboard_double_arrow_up, 'Вверх'),
+    'scrolldown': (Icons.keyboard_double_arrow_down, 'Вниз'),
     'rclick': (Icons.mouse, 'Правый клик'),
     'copy': (Icons.copy, 'Копировать'),
     'paste': (Icons.paste, 'Вставить'),
@@ -369,6 +374,9 @@ class _ThumbToolsState extends State<ThumbTools> {
   List<Widget> _ringItems() {
     return [
       for (final id in _ring)
+        if (id == 'scrollup' || id == 'scrolldown')
+          _scrollButton(id == 'scrollup' ? 1 : -1, _look[id]!.$1)
+        else
         _ringButton(_look[id]!.$1, () => _runAction(id),
                 onLongPress: !canRemove(id)
                     ? null
@@ -379,6 +387,42 @@ class _ThumbToolsState extends State<ThumbTools> {
       if (canAdd(_ring) && availableToAdd(_ring).isNotEmpty)
         _ringButton(Icons.add, _addMenu),
     ];
+  }
+
+  // Hold to scroll; [dir] 1 = up, -1 = down (wheel y sign), speeds up.
+  void _scrollStart(int dir) {
+    HapticFeedback.selectionClick();
+    _scrollTimer?.cancel();
+    var ticks = 0;
+    void fire() => _im.scroll(dir * (1 + math.min(ticks ~/ 8, 4)));
+    fire();
+    _scrollTimer = Timer.periodic(const Duration(milliseconds: 70), (_) {
+      ticks++;
+      fire();
+    });
+  }
+
+  void _scrollStop() {
+    _scrollTimer?.cancel();
+    _scrollTimer = null;
+  }
+
+  Widget _scrollButton(int dir, IconData icon) {
+    return Listener(
+      onPointerDown: (_) => _scrollStart(dir),
+      onPointerUp: (_) => _scrollStop(),
+      onPointerCancel: (_) => _scrollStop(),
+      child: Material(
+        color: MyTheme.accent80,
+        shape: const CircleBorder(),
+        elevation: 4,
+        child: SizedBox(
+          width: _item,
+          height: _item,
+          child: Icon(icon, color: Colors.white, size: 26),
+        ),
+      ),
+    );
   }
 
   Future<String?> _pickAction(String title, List<String> ids) {

@@ -52,7 +52,7 @@ void main() {
     expect(ring.contains('copy'), isFalse);
     ring = replaceAction(ring, 'paste', 'home');
     ring = addAction(ring, 'end');
-    expect(ring, ['rclick', 'home', 'enter', 'end', 'more']);
+    expect(ring, ['scrollup', 'scrolldown', 'rclick', 'home', 'enter', 'end', 'more']);
     expect(parseRing(encodeRing(ring)), ring);
   });
 
