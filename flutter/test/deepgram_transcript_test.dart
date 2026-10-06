@@ -69,6 +69,35 @@ void main() {
     expect(t.result, '');
   });
 
+  test('each final phrase is handed out once, typed with one space between', () {
+    final t = DeepgramTranscript();
+    t.feed(_msg('привет'));
+    expect(t.takeCommitted(), '');
+    t.feed(_msg('привет мир', isFinal: true));
+    expect(t.takeCommitted(), 'привет мир');
+    expect(t.takeCommitted(), '');
+    t.feed(_msg('как дела', isFinal: true));
+    expect(t.takeCommitted(), ' как дела');
+  });
+
+  test('interim tail is typed on stop only if it never became final', () {
+    final t = DeepgramTranscript();
+    t.feed(_msg('one', isFinal: true));
+    expect(t.takeCommitted(), 'one');
+    t.feed(_msg('two'));
+    expect(t.takeTail(), ' two');
+    expect(t.takeTail(), '');
+  });
+
+  test('reset starts a fresh utterance without a leading space', () {
+    final t = DeepgramTranscript();
+    t.feed(_msg('first', isFinal: true));
+    t.takeCommitted();
+    t.reset();
+    t.feed(_msg('second', isFinal: true));
+    expect(t.takeCommitted(), 'second');
+  });
+
   test('mixed Russian and English text is preserved', () {
     final t = DeepgramTranscript();
     t.feed(_msg('открой GitHub и Claude Code', isFinal: true));

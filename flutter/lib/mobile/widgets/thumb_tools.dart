@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hbb/consts.dart';
 import 'package:flutter_hbb/models/input_model.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_hbb/models/platform_model.dart';
 
 import '../../common.dart';
 import '../voice/deepgram_dictation.dart';
+import 'ring_config.dart';
 
 enum _Mod { ctrl, alt, shift, cmd }
 
@@ -38,10 +40,46 @@ class _ThumbToolsState extends State<ThumbTools> {
   // 0 = off, 1 = next key only, 2 = locked.
   final Map<_Mod, int> _mods = {for (final m in _Mod.values) m: 0};
 
-  late final DeepgramDictation _dictation =
-      DeepgramDictation(onText: (t) => setState(() => _bubble = t));
+  static const String _kRingKey = 'portal-ring';
+  static const String _kLangKey = 'portal-dg-lang';
+
+  List<String> _ring = parseRing(bind.mainGetLocalOption(key: _kRingKey));
+
+  late final DeepgramDictation _dictation = DeepgramDictation(
+    onText: (t) {
+      if (mounted) setState(() => _bubble = t);
+    },
+    onCommit: _type,
+    onError: (msg) {
+      if (mounted) setState(() => _recording = false);
+      showToast(msg);
+    },
+  );
 
   InputModel get _im => widget.ffi.inputModel;
+
+  @override
+  void initState() {
+    super.initState();
+    final lang = bind.mainGetLocalOption(key: _kLangKey);
+    if (kDictationLanguages.containsKey(lang)) {
+      DeepgramDictation.language = lang;
+    }
+  }
+
+  void _type(String text) {
+    bind.sessionInputString(sessionId: widget.ffi.sessionId, value: text);
+  }
+
+  void _setRing(List<String> ring) {
+    setState(() => _ring = ring);
+    bind.mainSetLocalOption(key: _kRingKey, value: encodeRing(ring));
+  }
+
+  void _setLanguage(String lang) {
+    setState(() => DeepgramDictation.language = lang);
+    bind.mainSetLocalOption(key: _kLangKey, value: lang);
+  }
 
   @override
   void dispose() {
@@ -134,7 +172,7 @@ class _ThumbToolsState extends State<ThumbTools> {
     }
     if (text.isNotEmpty) {
       HapticFeedback.lightImpact();
-      bind.sessionInputString(sessionId: widget.ffi.sessionId, value: text);
+      _type(text);
     }
   }
 
@@ -217,20 +255,37 @@ class _ThumbToolsState extends State<ThumbTools> {
   }
 
   Widget _buildHub() {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        setState(() => _ringOpen = !_ringOpen);
-      },
-      onLongPressStart: (_) {
-        setState(() => _ringOpen = false);
-        _micDown();
-      },
-      onLongPressEnd: (_) => _micUp(),
-      onLongPressCancel: () => _micUp(),
-      onPanUpdate: (d) {
-        final size = MediaQuery.of(context).size;
-        setState(() => _pos = _clamp((_pos ?? Offset.zero) + d.delta, size));
+    return RawGestureDetector(
+      gestures: {
+        TapGestureRecognizer:
+            GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
+          () => TapGestureRecognizer(),
+          (g) => g.onTap = () {
+            HapticFeedback.selectionClick();
+            setState(() => _ringOpen = !_ringOpen);
+          },
+        ),
+        LongPressGestureRecognizer:
+            GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
+          () => LongPressGestureRecognizer(
+              duration: const Duration(milliseconds: 220)),
+          (g) => g
+            ..onLongPressStart = (_) {
+              setState(() => _ringOpen = false);
+              _micDown();
+            }
+            ..onLongPressEnd = (_) => _micUp()
+            ..onLongPressCancel = _micUp,
+        ),
+        PanGestureRecognizer:
+            GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
+          () => PanGestureRecognizer(),
+          (g) => g.onUpdate = (d) {
+            final size = MediaQuery.of(context).size;
+            setState(
+                () => _pos = _clamp((_pos ?? Offset.zero) + d.delta, size));
+          },
+        ),
       },
       child: Container(
         width: _hub,
@@ -251,31 +306,158 @@ class _ThumbToolsState extends State<ThumbTools> {
     );
   }
 
-  List<Widget> _ringItems() {
-    return [
-      _micButton(),
-      _ringButton(Icons.mouse, () => _im.tap(MouseButtons.right)),
-      _ringButton(Icons.copy, () => _chord('VK_C')),
-      _ringButton(Icons.paste, () => _chord('VK_V')),
-      _ringButton(Icons.keyboard_return, () => _key('VK_RETURN')),
-      _ringButton(
-        Icons.more_horiz,
-        () => setState(() {
+  static const Map<String, (IconData, String)> _look = {
+    'mic': (Icons.mic, 'Голос'),
+    'rclick': (Icons.mouse, 'Правый клик'),
+    'copy': (Icons.copy, 'Копировать'),
+    'paste': (Icons.paste, 'Вставить'),
+    'cut': (Icons.content_cut, 'Вырезать'),
+    'undo': (Icons.undo, 'Отмена'),
+    'all': (Icons.select_all, 'Выделить всё'),
+    'enter': (Icons.keyboard_return, 'Enter'),
+    'esc': (Icons.close, 'Esc'),
+    'tab': (Icons.keyboard_tab, 'Tab'),
+    'bksp': (Icons.backspace_outlined, 'Backspace'),
+    'del': (Icons.delete_outline, 'Delete'),
+    'home': (Icons.first_page, 'Home'),
+    'end': (Icons.last_page, 'End'),
+    'left': (Icons.arrow_back, 'Влево'),
+    'up': (Icons.arrow_upward, 'Вверх'),
+    'down': (Icons.arrow_downward, 'Вниз'),
+    'right': (Icons.arrow_forward, 'Вправо'),
+    'more': (Icons.more_horiz, 'Ещё'),
+  };
+
+  void _runAction(String id) {
+    switch (id) {
+      case 'rclick':
+        _im.tap(MouseButtons.right);
+      case 'copy':
+        _chord('VK_C');
+      case 'paste':
+        _chord('VK_V');
+      case 'cut':
+        _chord('VK_X');
+      case 'undo':
+        _chord('VK_Z');
+      case 'all':
+        _chord('VK_A');
+      case 'enter':
+        _key('VK_RETURN');
+      case 'esc':
+        _key('VK_ESCAPE');
+      case 'tab':
+        _key('VK_TAB');
+      case 'bksp':
+        _key('VK_BACK');
+      case 'del':
+        _key('VK_DELETE');
+      case 'home':
+        _key('VK_HOME');
+      case 'end':
+        _key('VK_END');
+      case 'left':
+        _key('VK_LEFT');
+      case 'up':
+        _key('VK_UP');
+      case 'down':
+        _key('VK_DOWN');
+      case 'right':
+        _key('VK_RIGHT');
+      case 'more':
+        setState(() {
           _panelOpen = !_panelOpen;
           _ringOpen = false;
           if (!_panelOpen) _resetMods();
-        }),
-      ),
+        });
+    }
+  }
+
+  List<Widget> _ringItems() {
+    return [
+      for (final id in _ring)
+        id == 'mic'
+            ? _micButton()
+            : _ringButton(_look[id]!.$1, () => _runAction(id),
+                onLongPress: () => _editMenu(id)),
+      if (canAdd(_ring) && availableToAdd(_ring).isNotEmpty)
+        _ringButton(Icons.add, _addMenu),
     ];
   }
 
-  Widget _ringButton(IconData icon, VoidCallback onTap) {
+  Future<String?> _pickAction(String title, List<String> ids) {
+    return showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Text(title,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w600)),
+            ),
+            for (final id in ids)
+              ListTile(
+                leading: Icon(_look[id]!.$1),
+                title: Text(_look[id]!.$2),
+                onTap: () => Navigator.pop(ctx, id),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _addMenu() async {
+    final id = await _pickAction('Добавить кнопку', availableToAdd(_ring));
+    if (id != null) _setRing(addAction(_ring, id));
+  }
+
+  Future<void> _editMenu(String id) async {
+    HapticFeedback.mediumImpact();
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          ListTile(
+            leading: Icon(_look[id]!.$1),
+            title: Text(_look[id]!.$2),
+          ),
+          ListTile(
+            leading: const Icon(Icons.swap_horiz),
+            title: const Text('Заменить'),
+            enabled: id != kRingLocked,
+            onTap: () => Navigator.pop(ctx, 'replace'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.delete_outline),
+            title: Text(
+                canRemove(id) ? 'Удалить' : 'Удалить нельзя: открывает панель'),
+            enabled: canRemove(id),
+            onTap: () => Navigator.pop(ctx, 'delete'),
+          ),
+        ]),
+      ),
+    );
+    if (choice == 'delete') {
+      _setRing(removeAction(_ring, id));
+    } else if (choice == 'replace') {
+      final to = await _pickAction('Заменить на', availableToAdd(_ring));
+      if (to != null) _setRing(replaceAction(_ring, id, to));
+    }
+  }
+
+  Widget _ringButton(IconData icon, VoidCallback onTap,
+      {VoidCallback? onLongPress}) {
     return Material(
       color: MyTheme.accent80,
       shape: const CircleBorder(),
       elevation: 4,
       child: InkWell(
         customBorder: const CircleBorder(),
+        onLongPress: onLongPress,
         onTap: () {
           HapticFeedback.selectionClick();
           onTap();
@@ -340,6 +522,11 @@ class _ThumbToolsState extends State<ThumbTools> {
 
   Widget _buildPanel() {
     final rows = <Widget>[
+      Wrap(alignment: WrapAlignment.center, children: [
+        for (final e in kDictationLanguages.entries)
+          _keyBtn('\u{1F3A4} ${e.value}', () => _setLanguage(e.key),
+              active: DeepgramDictation.language == e.key, minWidth: 64),
+      ]),
       Wrap(alignment: WrapAlignment.center, children: [
         _keyBtn('Esc', () => _key('VK_ESCAPE')),
         _keyBtn('Tab', () => _key('VK_TAB')),

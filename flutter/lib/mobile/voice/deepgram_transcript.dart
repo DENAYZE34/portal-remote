@@ -5,6 +5,8 @@ class DeepgramTranscript {
   final StringBuffer _final = StringBuffer();
   String _interim = '';
   bool _flushed = false;
+  final List<String> _pending = [];
+  bool _typedAny = false;
 
   /// True once a `from_finalize` result arrived (reply to a Finalize request).
   bool get flushed => _flushed;
@@ -22,6 +24,29 @@ class DeepgramTranscript {
     _final.clear();
     _interim = '';
     _flushed = false;
+    _pending.clear();
+    _typedAny = false;
+  }
+
+  /// Final segments not yet handed out, ready to type (leading space when
+  /// something was already typed in this utterance). Empty if none.
+  String takeCommitted() {
+    if (_pending.isEmpty) return '';
+    final text = _pending.join(' ');
+    _pending.clear();
+    final out = _typedAny ? ' $text' : text;
+    _typedAny = true;
+    return out;
+  }
+
+  /// Interim tail that never became final; last resort on stop.
+  String takeTail() {
+    final tail = _interim.trim();
+    if (tail.isEmpty) return '';
+    _interim = '';
+    final out = _typedAny ? ' $tail' : tail;
+    _typedAny = true;
+    return out;
   }
 
   /// Feeds one raw websocket message. Returns true if [composed] may have changed.
@@ -42,6 +67,7 @@ class DeepgramTranscript {
       if (text.isNotEmpty) {
         if (_final.isNotEmpty) _final.write(' ');
         _final.write(text);
+        _pending.add(text);
       }
       _interim = '';
       if (msg['from_finalize'] == true) _flushed = true;
