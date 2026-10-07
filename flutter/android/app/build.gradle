@@ -84,6 +84,11 @@ protobuf {
 android {
     namespace "com.carriez.flutter_hbb"
     compileSdkVersion 36
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
 
