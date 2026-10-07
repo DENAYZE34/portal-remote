@@ -263,21 +263,21 @@ jobs:
         shell: bash
         run: |
           mkdir -p out
-          cp signed-apk/rustdesk-${{ env.VERSION }}-aarch64.apk out/Portal-android.apk
+          cp signed-apk/rustdesk-${{ env.VERSION }}-aarch64.apk out/PortalDesk-android.apk
 
       - name: Upload apk
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: portal-android
-          path: out/Portal-android.apk
+          path: out/PortalDesk-android.apk
 
       - name: Publish Android release
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
         with:
           tag_name: android-latest
-          name: Portal Android (latest)
+          name: PortalDesk Android (latest)
           prerelease: true
           make_latest: 'false'
-          files: out/Portal-android.apk
+          files: out/PortalDesk-android.apk
     permissions:
       contents: write

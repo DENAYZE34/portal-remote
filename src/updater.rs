@@ -205,7 +205,7 @@ fn check_update(manually: bool) -> ResultType<()> {
                 );
             };
             format!(
-                "{}/Portal-setup-{}-{}.{}",
+                "{}/PortalDesk-setup-{}-{}.{}",
                 download_url,
                 version,
                 arch,

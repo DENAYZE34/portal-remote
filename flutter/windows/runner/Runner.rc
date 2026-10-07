@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "Portal" "\0"
-            VALUE "FileDescription", "Portal Remote Desktop" "\0"
+            VALUE "CompanyName", "PortalDesk" "\0"
+            VALUE "FileDescription", "PortalDesk Remote Desktop" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "rustdesk" "\0"
-            VALUE "LegalCopyright", "Portal" "\0"
+            VALUE "LegalCopyright", "PortalDesk" "\0"
             VALUE "OriginalFilename", "rustdesk.exe" "\0"
-            VALUE "ProductName", "Portal" "\0"
+            VALUE "ProductName", "PortalDesk" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

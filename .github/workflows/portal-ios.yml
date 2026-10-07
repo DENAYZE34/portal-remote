@@ -116,23 +116,23 @@ jobs:
 
         mkdir -p /tmp/ipa/Payload && cp -R Runner.app /tmp/ipa/Payload/
 
-        cd /tmp/ipa && zip -qry "$GITHUB_WORKSPACE/Portal-unsigned.ipa" Payload'
+        cd /tmp/ipa && zip -qry "$GITHUB_WORKSPACE/PortalDesk-unsigned.ipa" Payload'
     - name: Upload ipa
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
         name: portal-ios-unsigned
-        path: Portal-unsigned.ipa
+        path: PortalDesk-unsigned.ipa
     - name: Write SideStore source
       shell: bash
-      run: "SIZE=$(stat -f%z Portal-unsigned.ipa)\nDATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)\ncat > apps.json <<EOF\n{\n  \"name\": \"Portal\",\n  \"identifier\": \"com.portalremote.source\",\n  \"apps\": [{\n    \"name\": \"Portal\",\n    \"bundleIdentifier\": \"com.portalremote.app\",\n    \"developerName\": \"Portal\",\n    \"subtitle\": \"Remote desktop\",\n    \"localizedDescription\": \"Portal remote desktop client\",\n    \"iconURL\": \"https://raw.githubusercontent.com/DENAYZE34/portal-remote/main/res/icon.png\",\n    \"version\": \"1.5.${{ github.run_number }}\",\n    \"versionDate\": \"$DATE\",\n    \"downloadURL\": \"https://github.com/DENAYZE34/portal-remote/releases/download/ios-latest/Portal-unsigned.ipa\",\n    \"size\": $SIZE\n  }]\n}\nEOF\ncat apps.json"
+      run: "SIZE=$(stat -f%z PortalDesk-unsigned.ipa)\nDATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)\ncat > apps.json <<EOF\n{\n  \"name\": \"PortalDesk\",\n  \"identifier\": \"com.portalremote.source\",\n  \"apps\": [{\n    \"name\": \"Portal\",\n    \"bundleIdentifier\": \"com.portalremote.app\",\n    \"developerName\": \"Portal\",\n    \"subtitle\": \"Remote desktop\",\n    \"localizedDescription\": \"Portal remote desktop client\",\n    \"iconURL\": \"https://raw.githubusercontent.com/DENAYZE34/portal-remote/main/res/icon.png\",\n    \"version\": \"1.5.${{ github.run_number }}\",\n    \"versionDate\": \"$DATE\",\n    \"downloadURL\": \"https://github.com/DENAYZE34/portal-remote/releases/download/ios-latest/PortalDesk-unsigned.ipa\",\n    \"size\": $SIZE\n  }]\n}\nEOF\ncat apps.json"
     - name: Publish iOS release
       uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
       with:
         tag_name: ios-latest
-        name: Portal iOS (latest)
+        name: PortalDesk iOS (latest)
         prerelease: true
         make_latest: 'false'
-        files: 'Portal-unsigned.ipa
+        files: 'PortalDesk-unsigned.ipa
 
           apps.json'
     permissions:
