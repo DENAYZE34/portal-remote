@@ -26,6 +26,7 @@ import '../../utils/image.dart';
 import '../widgets/dialog.dart';
 import '../widgets/custom_scale_widget.dart';
 import '../stability.dart';
+import '../quality_preset.dart';
 
 final initText = '1' * 1024;
 
@@ -64,6 +65,15 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
   Timer? _timer;
   bool _showBar = !isWebDesktop;
   bool _thumbOn = false;
+  String _quality = 'best';
+
+  Future<void> _cyclePreset() async {
+    final current = await bind.sessionGetImageQuality(sessionId: sessionId);
+    final next = nextQualityPreset(current);
+    await bind.sessionSetImageQuality(sessionId: sessionId, value: next);
+    if (mounted) setState(() => _quality = next);
+    showToast(qualityPresetLabel(next));
+  }
   bool _showGestureHelp = false;
   String _value = '';
   Orientation? _currentOrientation;
@@ -622,23 +632,13 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
                           ),
                         ]) +
                   (isWeb
-                      ? []
+                      ? <Widget>[]
                       : <Widget>[
-                          futureBuilder(
-                              future: gFFI.invokeMethod(
-                                  "get_value", "KEY_IS_SUPPORT_VOICE_CALL"),
-                              hasData: (isSupportVoiceCall) => IconButton(
-                                    color: Colors.white,
-                                    icon: isAndroid && isSupportVoiceCall
-                                        ? SvgPicture.asset('assets/chat.svg',
-                                            colorFilter: ColorFilter.mode(
-                                                Colors.white, BlendMode.srcIn))
-                                        : Icon(Icons.message),
-                                    onPressed: () =>
-                                        isAndroid && isSupportVoiceCall
-                                            ? showChatOptions(widget.id)
-                                            : onPressedTextChat(widget.id),
-                                  ))
+                          IconButton(
+                            color: Colors.white,
+                            icon: Icon(qualityPresetIcon(_quality)),
+                            onPressed: _cyclePreset,
+                          ),
                         ]) +
                   [
                     IconButton(
