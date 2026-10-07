@@ -227,7 +227,7 @@ jobs:
               cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/librustdesk.so
               # build flutter
               pushd flutter
-              flutter build apk "--${{ matrix.job.reltype }}" --target-platform android-arm64 --split-per-abi "--dart-define=PORTAL_DG_URL=${{ secrets.PORTAL_DG_URL }}" "--dart-define=PORTAL_DG_SECRET=${{ secrets.PORTAL_DG_SECRET }}" "--dart-define=PORTAL_DG_FP=${{ secrets.PORTAL_DG_FP }}"
+              flutter build apk "--${{ matrix.job.reltype }}" --target-platform android-arm64 --split-per-abi "--dart-define=PORTAL_BUILD=${{ github.run_number }}" "--dart-define=PORTAL_DG_URL=${{ secrets.PORTAL_DG_URL }}" "--dart-define=PORTAL_DG_SECRET=${{ secrets.PORTAL_DG_SECRET }}" "--dart-define=PORTAL_DG_FP=${{ secrets.PORTAL_DG_FP }}"
               mv build/app/outputs/flutter-apk/app-arm64-v8a-${{ matrix.job.reltype }}.apk ../rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk
             ;;
             armv7-linux-androideabi)
@@ -287,6 +287,7 @@ jobs:
         with:
           tag_name: android-latest
           name: PortalDesk Android (latest)
+          body: build ${{ github.run_number }}
           prerelease: true
           make_latest: 'false'
           files: out/PortalDesk-android.apk

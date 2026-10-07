@@ -8,6 +8,7 @@ import '../../common/widgets/chat_page.dart';
 import '../../models/platform_model.dart';
 import '../../models/state_model.dart';
 import 'connection_page.dart';
+import '../update_check.dart';
 
 abstract class PageShape extends Widget {
   final String title = "";
@@ -43,6 +44,11 @@ class HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     initPages();
+    if (isAndroid) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) checkForPortalUpdate(context);
+      });
+    }
   }
 
   void initPages() {
@@ -52,7 +58,8 @@ class HomePageState extends State<HomePage> {
         appBarActions: [],
       ));
     }
-    if (isAndroid && !bind.isOutgoingOnly()) {
+    // Controller-only build: no host (share screen) tabs on Android.
+    if (isAndroid && !bind.isOutgoingOnly() && false) {
       _chatPageTabIndex = _pages.length;
       _pages.addAll([ChatPage(type: ChatPageType.mobileMain), ServerPage()]);
     }
