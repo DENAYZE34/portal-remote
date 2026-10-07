@@ -10,6 +10,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_hbb/mobile/auto_reconnect.dart';
 import 'package:flutter_hbb/common/widgets/peers_view.dart';
 import 'package:flutter_hbb/consts.dart';
 import 'package:flutter_hbb/models/ab_model.dart';
@@ -119,6 +120,7 @@ class FfiModel with ChangeNotifier {
   late VirtualMouseMode virtualMouseMode;
   Timer? _timer;
   Timer? _restartReconnectDelayTimer;
+  final AutoReconnectPolicy _autoReconnect = AutoReconnectPolicy();
   var _reconnects = 1;
   DateTime? _offlineReconnectStartTime;
   bool _androidDocumentPickerActive = false;
@@ -961,6 +963,18 @@ class FfiModel with ChangeNotifier {
       showPrivacyFailedDialog(
           sessionId, type, title, text, link, hasRetry, dialogManager);
     } else {
+      final retryIn = isMobile
+          ? _autoReconnect.next(title, text, DateTime.now())
+          : null;
+      if (retryIn != null) {
+        _restartReconnectDelayTimer?.cancel();
+        _restartReconnectDelayTimer = Timer(retryIn, () {
+          _restartReconnectDelayTimer = null;
+          if (parent.target?.closed == true) return;
+          reconnect(dialogManager, sessionId, false);
+        });
+        return;
+      }
       var hasRetry = evt['hasRetry'] == 'true';
       if (!hasRetry) {
         hasRetry = shouldAutoRetryOnOffline(type, title, text);
