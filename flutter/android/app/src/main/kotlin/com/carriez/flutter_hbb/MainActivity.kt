@@ -354,6 +354,41 @@ class MainActivity : FlutterActivity() {
                         result.success(true)
                     }
                 }
+                "keep_alive_start" -> {
+                    try {
+                        androidx.core.content.ContextCompat.startForegroundService(this, Intent(this, KeepAliveService::class.java))
+                        result.success(true)
+                    } catch (e: Exception) {
+                        Log.e(logTag, "keep_alive_start failed", e)
+                        result.success(false)
+                    }
+                }
+                "keep_alive_stop" -> {
+                    stopService(Intent(this, KeepAliveService::class.java))
+                    result.success(true)
+                }
+                "open_battery_settings" -> {
+                    try {
+                        startActivity(Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.success(false)
+                    }
+                }
+                "open_autostart" -> {
+                    var ok = false
+                    try {
+                        startActivity(Intent().setComponent(android.content.ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        ok = true
+                    } catch (e: Exception) {
+                        try {
+                            startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:" + packageName)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                            ok = true
+                        } catch (e2: Exception) {
+                        }
+                    }
+                    result.success(ok)
+                }
                 "enable_soft_keyboard" -> {
                     // https://blog.csdn.net/hanye2020/article/details/105553780
                     if (call.arguments as Boolean) {

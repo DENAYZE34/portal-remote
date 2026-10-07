@@ -6,6 +6,7 @@ import '../../common.dart';
 import '../../models/platform_model.dart';
 import '../../models/state_model.dart';
 import 'connection_page.dart';
+import '../stability.dart';
 import '../update_check.dart';
 
 abstract class PageShape extends Widget {
@@ -44,7 +45,10 @@ class HomePageState extends State<HomePage> {
     initPages();
     if (isAndroid) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) checkForPortalUpdate(context);
+        if (!mounted) return;
+        showStabilitySetupOnce(context).then((_) {
+          if (mounted) checkForPortalUpdate(context);
+        });
       });
     }
   }
