@@ -283,6 +283,15 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
       _timer = Timer(kMobileDelaySoftKeyboardFocus, () {
         SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
             overlays: SystemUiOverlay.values);
+        // Do not steal focus from a text field the user is typing in (the
+        // connection password dialog); the hidden remote-input field would
+        // swallow the keystrokes.
+        final focused = FocusManager.instance.primaryFocus;
+        final typingElsewhere = focused != null &&
+            focused != _mobileFocusNode &&
+            focused.context?.findAncestorWidgetOfExactType<EditableText>() !=
+                null;
+        if (typingElsewhere) return;
         _mobileFocusNode.requestFocus();
       });
     }
