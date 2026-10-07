@@ -63,6 +63,7 @@ class RemotePage extends StatefulWidget {
 class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
   Timer? _timer;
   bool _showBar = !isWebDesktop;
+  bool _thumbOn = false;
   bool _showGestureHelp = false;
   String _value = '';
   Orientation? _currentOrientation;
@@ -610,6 +611,16 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
                                     () => _showGestureHelp = !_showGestureHelp),
                               ),
                             ]) +
+                  (isWebDesktop || ffiModel.viewOnly || !ffiModel.keyboard
+                      ? <Widget>[]
+                      : <Widget>[
+                          IconButton(
+                            color: _thumbOn ? Colors.amberAccent : Colors.white,
+                            icon: const Icon(Icons.pan_tool_alt),
+                            onPressed: () =>
+                                setState(() => _thumbOn = !_thumbOn),
+                          ),
+                        ]) +
                   (isWeb
                       ? []
                       : <Widget>[
@@ -717,7 +728,7 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
             ));
           }
           if (gFFI.ffiModel.keyboard && !gFFI.ffiModel.viewOnly) {
-            paints.add(ThumbTools(ffi: gFFI));
+            if (_thumbOn) paints.add(ThumbTools(ffi: gFFI, openOnStart: true));
           }
           return paints;
         }()));

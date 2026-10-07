@@ -20,7 +20,9 @@ enum _Mod { ctrl, alt, shift, cmd }
 /// key panel with Esc/Tab/modifiers/arrows/F-keys.
 class ThumbTools extends StatefulWidget {
   final FFI ffi;
-  const ThumbTools({Key? key, required this.ffi}) : super(key: key);
+  final bool openOnStart;
+  const ThumbTools({Key? key, required this.ffi, this.openOnStart = false})
+      : super(key: key);
 
   @override
   State<ThumbTools> createState() => _ThumbToolsState();
@@ -64,6 +66,7 @@ class _ThumbToolsState extends State<ThumbTools> {
   @override
   void initState() {
     super.initState();
+    _ringOpen = widget.openOnStart;
     final lang = bind.mainGetLocalOption(key: _kLangKey);
     if (kDictationLanguages.containsKey(lang)) {
       DeepgramDictation.language = lang;
@@ -190,7 +193,9 @@ class _ThumbToolsState extends State<ThumbTools> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    _pos ??= Offset(size.width - _hub - 16, size.height * 0.62);
+    _pos ??= widget.openOnStart
+        ? Offset(size.width / 2 - _hub / 2, size.height - 210)
+        : Offset(size.width - _hub - 16, size.height * 0.62);
     final pos = _clamp(_pos!, size);
     final hubCenter = pos + const Offset(_hub / 2, _hub / 2);
 
