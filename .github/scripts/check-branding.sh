@@ -14,4 +14,8 @@ grep -q "PortalDesk-setup-{}-{}.{}" src/updater.rs || { echo "updater asset name
 # ID/password live in the config dir named by APP_NAME and in the app identity: changing them resets users
 grep -q 'RwLock::new("PortalDesk".to_owned())' libs/hbb_common/src/config.rs || { echo "APP_NAME changed: would reset ID and password"; fail=1; }
 grep -q 'applicationId "com.portalremote.app"' flutter/android/app/build.gradle || { echo "applicationId changed: updates would not install over the old app"; fail=1; }
+# The app must never contact RustDesk services at runtime
+grep -n 'admin.rustdesk.com".to_owned' src/common.rs && { echo "RustDesk API fallback present"; fail=1; }
+grep -n 'api.rustdesk.com/version' libs/hbb_common/src/lib.rs && { echo "RustDesk version-check URL present"; fail=1; }
+grep -rnE "[\"']https://(www[.])?rustdesk[.]com/docs|[\"']https://github[.]com/rustdesk/rustdesk/issues" flutter/lib src/client.rs libs/hbb_common/src/config.rs && { echo "RustDesk links in app"; fail=1; }
 exit $fail
