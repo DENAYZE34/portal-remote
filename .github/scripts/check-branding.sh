@@ -11,4 +11,7 @@ grep -q "offstage: true || !(!_svcStopped.value" flutter/lib/desktop/pages/conne
 grep -qi "rustdesk|purslane" flutter/android/app/src/main/res/values/strings.xml && { echo "RustDesk in Android strings"; fail=1; }
 grep -qi "LegalCopyright.*rustdesk|Purslane" flutter/windows/runner/Runner.rc flutter/lib/desktop/pages/desktop_setting_page.dart && { echo "RustDesk/Purslane in copyright"; fail=1; }
 grep -q "PortalDesk-setup-{}-{}.{}" src/updater.rs || { echo "updater asset name != release asset"; fail=1; }
+# ID/password live in the config dir named by APP_NAME and in the app identity: changing them resets users
+grep -q 'RwLock::new("PortalDesk".to_owned())' libs/hbb_common/src/config.rs || { echo "APP_NAME changed: would reset ID and password"; fail=1; }
+grep -q 'applicationId "com.portalremote.app"' flutter/android/app/build.gradle || { echo "applicationId changed: updates would not install over the old app"; fail=1; }
 exit $fail
