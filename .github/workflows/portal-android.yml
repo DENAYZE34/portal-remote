@@ -262,6 +262,14 @@ jobs:
           mkdir -p signed-apk; pushd signed-apk
           mv ../rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk .
 
+      - name: Verify controller-only manifest
+        shell: bash
+        run: |
+          m=$(find flutter/build/app/intermediates -path '*release*' -name AndroidManifest.xml | grep -i merged | head -1)
+          echo "merged manifest: $m"
+          grep -E 'uses-permission|<service|<receiver' "$m" | sed 's/^ *//' | cut -c1-140
+          if grep -E 'SYSTEM_ALERT_WINDOW|BIND_ACCESSIBILITY_SERVICE|RECEIVE_BOOT_COMPLETED|MEDIA_PROJECTION' "$m"; then echo 'sensitive permission present'; exit 1; fi
+
       - name: Package apk
         shell: bash
         run: |
