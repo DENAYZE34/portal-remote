@@ -20,20 +20,31 @@ final String _kApkUrl =
 
 /// Asks GitHub for the latest Android release and offers an in-app update when
 /// it is newer than this build. Silent on every failure.
-Future<void> checkForPortalUpdate(BuildContext context) async {
+Future<void> checkForPortalUpdate(BuildContext context,
+    {bool manual = false}) async {
   final local = int.tryParse(_kBuild);
-  if (local == null || !isAndroid) return;
+  if (!isAndroid) return;
+  if (local == null) {
+    if (manual) showToast('Версия сборки неизвестна');
+    return;
+  }
   try {
     final resp = await http
         .get(Uri.parse(_kReleaseApi),
             headers: {'Accept': 'application/vnd.github+json'})
         .timeout(const Duration(seconds: 8));
-    if (resp.statusCode != 200) return;
+    if (resp.statusCode != 200) {
+      if (manual) showToast('Не удалось проверить обновления');
+      return;
+    }
     final body = (jsonDecode(resp.body) as Map<String, dynamic>)['body'];
     final text = body is String ? body : null;
     final remote = parseReleaseBuild(text);
     final sha = parseReleaseSha(text);
-    if (!isNewerBuild(remote, local) || sha == null || !context.mounted) return;
+    if (!isNewerBuild(remote, local) || sha == null || !context.mounted) {
+      if (manual) showToast('У вас последняя версия (сборка $local)');
+      return;
+    }
     final yes = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -53,7 +64,9 @@ Future<void> checkForPortalUpdate(BuildContext context) async {
     if (yes == true && context.mounted) {
       await _downloadAndInstall(context, sha);
     }
-  } catch (_) {}
+  } catch (_) {
+    if (manual) showToast('Нет связи с сервером обновлений');
+  }
 }
 
 Future<void> _downloadAndInstall(BuildContext context, String sha) async {

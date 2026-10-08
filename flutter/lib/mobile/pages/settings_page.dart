@@ -19,6 +19,7 @@ import '../../models/model.dart';
 import '../../models/platform_model.dart';
 import '../widgets/deploy_dialog.dart';
 import '../widgets/dialog.dart';
+import '../update_check.dart';
 import 'home_page.dart';
 import 'scan_page.dart';
 
@@ -748,6 +749,12 @@ class _SettingsState extends State<SettingsPage> with WidgetsBindingObserver {
             ],
           ),
         SettingsSection(title: Text(translate("Settings")), tiles: [
+          if (isAndroid)
+            SettingsTile(
+                title: const Text('Проверить обновления'),
+                leading: const Icon(Icons.system_update),
+                onPressed: (context) =>
+                    checkForPortalUpdate(context, manual: true)),
           if (!disabledSettings && !_hideNetwork && !_hideServer)
             SettingsTile(
                 title: Text(translate('ID/Relay Server')),
