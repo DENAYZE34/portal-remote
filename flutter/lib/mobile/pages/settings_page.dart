@@ -83,6 +83,13 @@ String _zoomModeText(ZoomMode m) {
 }
 
 class _SettingsState extends State<SettingsPage> with WidgetsBindingObserver {
+  bool _advanced = bind.mainGetLocalOption(key: 'portal-advanced') == 'Y';
+
+  /// Simple mode shows only the first section (essentials) and About.
+  List<AbstractSettingsSection> _visibleSections(
+          List<AbstractSettingsSection> all) =>
+      _advanced ? all : [all.first, all.last];
+
   final _hasIgnoreBattery =
       false; //androidVersion >= 26; // remove because not work on every device
   var _ignoreBatteryOpt = false;
@@ -732,38 +739,8 @@ class _SettingsState extends State<SettingsPage> with WidgetsBindingObserver {
     final hideSecuritySettings =
         bind.mainGetBuildinOption(key: kOptionHideSecuritySetting) == 'Y';
     final settings = SettingsList(
-      sections: [
-        customClientSection,
-        if (!bind.isDisableAccount())
-          SettingsSection(
-            title: Text(translate('Account')),
-            tiles: [
-              SettingsTile(
-                title: Obx(() => Text(gFFI.userModel.userName.value.isEmpty
-                    ? translate('Login')
-                    : '${translate('Logout')} (${gFFI.userModel.accountLabelWithHandle})')),
-                leading: Obx(() {
-                  final avatar = bind.mainResolveAvatarUrl(
-                      avatar: gFFI.userModel.avatar.value);
-                  return buildAvatarWidget(
-                        avatar: avatar,
-                        size: 28,
-                        borderRadius: null,
-                        fallback: Icon(Icons.person),
-                      ) ??
-                      Icon(Icons.person);
-                }),
-                onPressed: (context) {
-                  if (gFFI.userModel.userName.value.isEmpty) {
-                    loginDialog();
-                  } else {
-                    logOutConfirmDialog();
-                  }
-                },
-              ),
-            ],
-          ),
-        SettingsSection(title: Text(translate("Settings")), tiles: [
+      sections: _visibleSections([
+        SettingsSection(title: const Text('Основное'), tiles: [
           SettingsTile(
               title: const Text('Зум одним пальцем'),
               description: Text(_zoomModeText(currentZoomMode())),
@@ -807,6 +784,48 @@ class _SettingsState extends State<SettingsPage> with WidgetsBindingObserver {
                 leading: const Icon(Icons.system_update),
                 onPressed: (context) =>
                     checkForPortalUpdate(context, manual: true)),
+          SettingsTile.switchTile(
+            title: const Text('Показать все настройки'),
+            description: const Text('Сеть, сервер, кодеки, безопасность'),
+            initialValue: _advanced,
+            onToggle: (v) async {
+              await bind.mainSetLocalOption(
+                  key: 'portal-advanced', value: v ? 'Y' : 'N');
+              setState(() => _advanced = v);
+            },
+          ),
+        ]),
+        customClientSection,
+        if (!bind.isDisableAccount())
+          SettingsSection(
+            title: Text(translate('Account')),
+            tiles: [
+              SettingsTile(
+                title: Obx(() => Text(gFFI.userModel.userName.value.isEmpty
+                    ? translate('Login')
+                    : '${translate('Logout')} (${gFFI.userModel.accountLabelWithHandle})')),
+                leading: Obx(() {
+                  final avatar = bind.mainResolveAvatarUrl(
+                      avatar: gFFI.userModel.avatar.value);
+                  return buildAvatarWidget(
+                        avatar: avatar,
+                        size: 28,
+                        borderRadius: null,
+                        fallback: Icon(Icons.person),
+                      ) ??
+                      Icon(Icons.person);
+                }),
+                onPressed: (context) {
+                  if (gFFI.userModel.userName.value.isEmpty) {
+                    loginDialog();
+                  } else {
+                    logOutConfirmDialog();
+                  }
+                },
+              ),
+            ],
+          ),
+        SettingsSection(title: Text(translate("Settings")), tiles: [
           if (!disabledSettings && !_hideNetwork && !_hideServer)
             SettingsTile(
                 title: Text(translate('ID/Relay Server')),
@@ -1127,7 +1146,7 @@ class _SettingsState extends State<SettingsPage> with WidgetsBindingObserver {
             )
           ],
         ),
-      ],
+      ]),
     );
     return settings;
   }
