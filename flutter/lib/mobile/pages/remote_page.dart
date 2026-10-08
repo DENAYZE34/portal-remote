@@ -84,6 +84,16 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
     if (mounted) setState(() => _quality = preset);
   }
 
+  // Long-press on the quality button shows or hides FPS, speed, delay and codec.
+  Future<void> _toggleStats() async {
+    await bind.sessionToggleOption(
+        sessionId: sessionId, value: 'show-quality-monitor');
+    await gFFI.qualityMonitorModel.checkShowQualityMonitor(sessionId);
+    final on = bind.sessionGetToggleOptionSync(
+        sessionId: sessionId, arg: 'show-quality-monitor');
+    showToast(on ? 'Показатели включены' : 'Показатели выключены');
+  }
+
   Future<void> _cyclePreset() async {
     final current = await bind.sessionGetImageQuality(sessionId: sessionId);
     final next = nextQualityPreset(current);
@@ -669,10 +679,13 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
                   (isWeb
                       ? <Widget>[]
                       : <Widget>[
-                          IconButton(
-                            color: Colors.white,
-                            icon: Icon(qualityPresetIcon(_quality)),
-                            onPressed: _cyclePreset,
+                          GestureDetector(
+                            onLongPress: _toggleStats,
+                            child: IconButton(
+                              color: Colors.white,
+                              icon: Icon(qualityPresetIcon(_quality)),
+                              onPressed: _cyclePreset,
+                            ),
                           ),
                         ]) +
                   [
