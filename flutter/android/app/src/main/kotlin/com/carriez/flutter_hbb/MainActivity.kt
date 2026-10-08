@@ -354,6 +354,31 @@ class MainActivity : FlutterActivity() {
                         result.success(true)
                     }
                 }
+                "install_apk" -> {
+                    try {
+                        val path = call.arguments as String
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !packageManager.canRequestPackageInstalls()) {
+                            startActivity(
+                                Intent(
+                                    android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                                    android.net.Uri.parse("package:" + packageName)
+                                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            )
+                            result.success(false)
+                        } else {
+                            val uri = androidx.core.content.FileProvider.getUriForFile(this, packageName + ".updates", java.io.File(path))
+                            startActivity(
+                                Intent(Intent.ACTION_VIEW)
+                                    .setDataAndType(uri, "application/vnd.android.package-archive")
+                                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+                            )
+                            result.success(true)
+                        }
+                    } catch (e: Exception) {
+                        Log.e(logTag, "install_apk failed", e)
+                        result.success(false)
+                    }
+                }
                 "keep_alive_start" -> {
                     try {
                         androidx.core.content.ContextCompat.startForegroundService(this, Intent(this, KeepAliveService::class.java))

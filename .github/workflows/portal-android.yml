@@ -271,10 +271,12 @@ jobs:
           if grep -E 'SYSTEM_ALERT_WINDOW|BIND_ACCESSIBILITY_SERVICE|RECEIVE_BOOT_COMPLETED|MEDIA_PROJECTION' "$m"; then echo 'sensitive permission present'; exit 1; fi
 
       - name: Package apk
+        id: pkg
         shell: bash
         run: |
           mkdir -p out
           cp signed-apk/rustdesk-${{ env.VERSION }}-aarch64.apk out/PortalDesk-android.apk
+          echo "sha=$(sha256sum out/PortalDesk-android.apk | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
       - name: Upload apk
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -287,7 +289,9 @@ jobs:
         with:
           tag_name: android-latest
           name: PortalDesk Android (latest)
-          body: build ${{ github.run_number }}
+          body: |
+            build ${{ github.run_number }}
+            sha256 ${{ steps.pkg.outputs.sha }}
           prerelease: true
           make_latest: 'false'
           files: out/PortalDesk-android.apk
