@@ -27,6 +27,8 @@ import '../widgets/dialog.dart';
 import '../widgets/custom_scale_widget.dart';
 import '../stability.dart';
 import '../widgets/voice_toggle.dart';
+import '../widgets/zoom_widgets.dart';
+import '../zoom_logic.dart';
 import '../quality_preset.dart';
 
 final initText = '1' * 1024;
@@ -661,6 +663,8 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
                                 setState(() => _thumbOn = !_thumbOn),
                           ),
                           VoiceToggleButton(ffi: gFFI),
+                          if (zoomModeHasButton(currentZoomMode()))
+                            ZoomButton(ffi: gFFI),
                         ]) +
                   (isWeb
                       ? <Widget>[]
@@ -760,6 +764,11 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
           }
           if (gFFI.ffiModel.keyboard && !gFFI.ffiModel.viewOnly) {
             if (_thumbOn) paints.add(ThumbTools(ffi: gFFI, openOnStart: true));
+            final zoomMode = currentZoomMode();
+            if (zoomModeHasEdge(zoomMode)) {
+              paints.add(ZoomEdgeStrip(
+                  ffi: gFFI, onLeft: zoomEdgeOnLeft(zoomMode)));
+            }
           }
           return paints;
         }()));

@@ -20,6 +20,8 @@ import '../../models/platform_model.dart';
 import '../widgets/deploy_dialog.dart';
 import '../widgets/dialog.dart';
 import '../update_check.dart';
+import '../widgets/zoom_widgets.dart';
+import '../zoom_logic.dart';
 import 'home_page.dart';
 import 'scan_page.dart';
 
@@ -64,6 +66,19 @@ KeepScreenOn optionToKeepScreenOn(String value) {
       return KeepScreenOn.serviceOn;
     default:
       return KeepScreenOn.duringControlled;
+  }
+}
+
+String _zoomModeText(ZoomMode m) {
+  switch (m) {
+    case ZoomMode.edgeRight:
+      return 'Полоса справа';
+    case ZoomMode.edgeLeft:
+      return 'Полоса слева';
+    case ZoomMode.button:
+      return 'Кнопка в нижней панели';
+    case ZoomMode.both:
+      return 'Полоса справа и кнопка';
   }
 }
 
@@ -749,6 +764,32 @@ class _SettingsState extends State<SettingsPage> with WidgetsBindingObserver {
             ],
           ),
         SettingsSection(title: Text(translate("Settings")), tiles: [
+          SettingsTile(
+              title: const Text('Зум одним пальцем'),
+              description: Text(_zoomModeText(currentZoomMode())),
+              leading: const Icon(Icons.zoom_in),
+              onPressed: (context) async {
+                final pick = await showModalBottomSheet<ZoomMode>(
+                  context: context,
+                  builder: (ctx) => SafeArea(
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      for (final m in ZoomMode.values)
+                        ListTile(
+                          title: Text(_zoomModeText(m)),
+                          trailing: m == currentZoomMode()
+                              ? const Icon(Icons.check)
+                              : null,
+                          onTap: () => Navigator.pop(ctx, m),
+                        ),
+                    ]),
+                  ),
+                );
+                if (pick != null) {
+                  await bind.mainSetLocalOption(
+                      key: kZoomModeOption, value: zoomModeKey(pick));
+                  setState(() {});
+                }
+              }),
           if (isAndroid)
             SettingsTile(
                 title: const Text('Проверить обновления'),

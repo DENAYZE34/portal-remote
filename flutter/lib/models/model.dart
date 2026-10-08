@@ -2033,7 +2033,7 @@ class ImageModel with ChangeNotifier {
     final size = parent.target!.canvasModel.getSize();
     final xscale = size.width / _image!.width;
     final yscale = size.height / _image!.height;
-    return max(1.5, max(xscale, yscale));
+    return max(3.0, max(xscale, yscale));
   }
 
   // mobile only
