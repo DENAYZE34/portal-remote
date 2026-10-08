@@ -154,6 +154,19 @@ class _ThumbToolsState extends State<ThumbTools> {
     _consumeOnce();
   }
 
+  // Win+Shift+S: Windows region screenshot, goes to the PC clipboard.
+  void _winShift(String name) {
+    HapticFeedback.selectionClick();
+    final prevCmd = _im.command;
+    final prevShift = _im.shift;
+    _im.command = true;
+    _im.shift = true;
+    _im.inputKey(name);
+    _im.command = prevCmd;
+    _im.shift = prevShift;
+    _consumeOnce();
+  }
+
   Future<void> _micDown() async {
     if (_recording) return;
     HapticFeedback.mediumImpact();
@@ -350,6 +363,8 @@ class _ThumbToolsState extends State<ThumbTools> {
     'copy': (Icons.copy, 'Копировать'),
     'paste': (Icons.paste, 'Вставить'),
     'enter': (Icons.keyboard_return, 'Enter'),
+    'snip': (Icons.crop, 'Скриншот области'),
+    'shot': (Icons.screenshot_monitor, 'Скриншот экрана'),
     'home': (Icons.first_page, 'Home'),
     'end': (Icons.last_page, 'End'),
     'more': (Icons.more_horiz, 'Ещё'),
@@ -365,6 +380,10 @@ class _ThumbToolsState extends State<ThumbTools> {
         _chord('VK_V');
       case 'enter':
         _key('VK_RETURN');
+      case 'snip':
+        _winShift('VK_S');
+      case 'shot':
+        _key('VK_SNAPSHOT');
       case 'home':
         _key('VK_HOME');
       case 'end':

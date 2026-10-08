@@ -98,6 +98,41 @@ void main() {
     expect(t.takeCommitted(), 'second');
   });
 
+  test('words are typed as soon as two interim results agree on them', () {
+    final t = DeepgramTranscript();
+    t.feed(_msg('привет'));
+    expect(t.takeCommitted(), '');
+    t.feed(_msg('привет мир'));
+    expect(t.takeCommitted(), 'привет');
+    t.feed(_msg('привет мир как'));
+    expect(t.takeCommitted(), ' мир');
+    t.feed(_msg('Привет мир как дела', isFinal: true));
+    expect(t.takeCommitted(), ' как дела');
+    expect(t.takeCommitted(), '');
+  });
+
+  test('a word that changes between interims is not typed early', () {
+    final t = DeepgramTranscript();
+    t.feed(_msg('open'));
+    t.feed(_msg('opened the'));
+    expect(t.takeCommitted(), '');
+    t.feed(_msg('open the file'));
+    expect(t.takeCommitted(), '');
+    t.feed(_msg('open the file now', isFinal: true));
+    expect(t.takeCommitted(), 'open the file now');
+  });
+
+  test('the next phrase starts clean after a final', () {
+    final t = DeepgramTranscript();
+    t.feed(_msg('one two'));
+    t.feed(_msg('one two three', isFinal: true));
+    expect(t.takeCommitted(), 'one two three');
+    t.feed(_msg('four'));
+    t.feed(_msg('four five'));
+    expect(t.takeCommitted(), ' four');
+    expect(t.takeTail(), ' five');
+  });
+
   test('mixed Russian and English text is preserved', () {
     final t = DeepgramTranscript();
     t.feed(_msg('открой GitHub и Claude Code', isFinal: true));

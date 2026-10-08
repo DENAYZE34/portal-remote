@@ -11,7 +11,7 @@ void main() {
         .allMatches(src)
         .map((m) => m.group(1))
         .toSet();
-    for (final k in [...kPanelKeys, ...kChordKeys, ...kRingKeys]) {
+    for (final k in [...kPanelKeys, ...kChordKeys, ...kRingKeys, ...kShotKeys]) {
       expect(names.contains(k), isTrue, reason: '$k missing from KEY_MAP');
     }
   });
@@ -52,7 +52,7 @@ void main() {
     expect(ring.contains('copy'), isFalse);
     ring = replaceAction(ring, 'paste', 'home');
     ring = addAction(ring, 'end');
-    expect(ring, ['scrollup', 'scrolldown', 'scrollleft', 'scrollright', 'rclick', 'home', 'enter', 'end', 'more']);
+    expect(ring, ['scrollup', 'scrolldown', 'scrollleft', 'scrollright', 'rclick', 'home', 'enter', 'snip', 'end', 'more']);
     expect(parseRing(encodeRing(ring)), ring);
   });
 

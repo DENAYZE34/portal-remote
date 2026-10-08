@@ -26,6 +26,7 @@ import '../../utils/image.dart';
 import '../widgets/dialog.dart';
 import '../widgets/custom_scale_widget.dart';
 import '../stability.dart';
+import '../widgets/voice_toggle.dart';
 import '../quality_preset.dart';
 
 final initText = '1' * 1024;
@@ -639,6 +640,7 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
                             onPressed: () =>
                                 setState(() => _thumbOn = !_thumbOn),
                           ),
+                          VoiceToggleButton(ffi: gFFI),
                         ]) +
                   (isWeb
                       ? <Widget>[]

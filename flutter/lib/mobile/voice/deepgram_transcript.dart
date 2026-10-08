@@ -1,12 +1,25 @@
 import 'dart:convert';
 
-/// Accumulates Deepgram live-streaming `Results` messages into one text.
+/// Accumulates Deepgram live-streaming `Results` messages into one text and
+/// hands out words to type as soon as they are stable, so text appears while
+/// the user is still speaking.
+///
+/// A word is stable when two consecutive interim results agree on it at the
+/// same position. Words are never taken back: when the final result of a phrase
+/// arrives, only the words after the ones already typed are added.
 class DeepgramTranscript {
   final StringBuffer _final = StringBuffer();
   String _interim = '';
   bool _flushed = false;
   final List<String> _pending = [];
   bool _typedAny = false;
+  List<String> _prevInterim = const [];
+  int _phraseCommitted = 0;
+
+  static List<String> _words(String t) {
+    final s = t.trim();
+    return s.isEmpty ? const [] : s.split(RegExp(r'\s+'));
+  }
 
   /// True once a `from_finalize` result arrived (reply to a Finalize request).
   bool get flushed => _flushed;
@@ -26,10 +39,12 @@ class DeepgramTranscript {
     _flushed = false;
     _pending.clear();
     _typedAny = false;
+    _prevInterim = const [];
+    _phraseCommitted = 0;
   }
 
-  /// Final segments not yet handed out, ready to type (leading space when
-  /// something was already typed in this utterance). Empty if none.
+  /// Words ready to type and not handed out yet, with a leading space when
+  /// something was already typed in this utterance. Empty if none.
   String takeCommitted() {
     if (_pending.isEmpty) return '';
     final text = _pending.join(' ');
@@ -39,11 +54,17 @@ class DeepgramTranscript {
     return out;
   }
 
-  /// Interim tail that never became final; last resort on stop.
+  /// Interim words never confirmed; last resort on stop.
   String takeTail() {
-    final tail = _interim.trim();
-    if (tail.isEmpty) return '';
+    final words = _words(_interim);
     _interim = '';
+    _prevInterim = const [];
+    if (words.length <= _phraseCommitted) {
+      _phraseCommitted = 0;
+      return '';
+    }
+    final tail = words.sublist(_phraseCommitted).join(' ');
+    _phraseCommitted = 0;
     final out = _typedAny ? ' $tail' : tail;
     _typedAny = true;
     return out;
@@ -63,15 +84,31 @@ class DeepgramTranscript {
     if (msg['type'] != 'Results') return false;
     final alts = (msg['channel']?['alternatives'] as List?) ?? const [];
     final text = alts.isEmpty ? '' : (alts.first['transcript'] ?? '').toString();
+    final words = _words(text);
     if (msg['is_final'] == true) {
       if (text.isNotEmpty) {
         if (_final.isNotEmpty) _final.write(' ');
         _final.write(text);
-        _pending.add(text);
       }
+      if (words.length > _phraseCommitted) {
+        _pending.add(words.sublist(_phraseCommitted).join(' '));
+      }
+      _phraseCommitted = 0;
+      _prevInterim = const [];
       _interim = '';
       if (msg['from_finalize'] == true) _flushed = true;
     } else {
+      var stable = 0;
+      final limit =
+          words.length < _prevInterim.length ? words.length : _prevInterim.length;
+      while (stable < limit && words[stable] == _prevInterim[stable]) {
+        stable++;
+      }
+      if (stable > _phraseCommitted) {
+        _pending.add(words.sublist(_phraseCommitted, stable).join(' '));
+        _phraseCommitted = stable;
+      }
+      _prevInterim = words;
       _interim = text;
     }
     return true;

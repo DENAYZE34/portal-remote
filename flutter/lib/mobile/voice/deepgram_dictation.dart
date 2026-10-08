@@ -38,6 +38,9 @@ class DeepgramDictation {
 
   static String language = 'ru';
 
+  // One microphone: the hold-to-talk hub and the bar button must not overlap.
+  static bool _micBusy = false;
+
   final AudioRecorder _recorder = AudioRecorder();
   final DeepgramTranscript _transcript = DeepgramTranscript();
   final List<Uint8List> _buffer = [];
@@ -81,6 +84,7 @@ class DeepgramDictation {
   /// when recording started; the connection continues in the background.
   Future<String?> start() async {
     if (_active) return null;
+    if (_micBusy) return 'Microphone is busy';
     if (!configured) return 'Voice proxy is not configured in this build';
     if (!await _recorder.hasPermission()) return 'Microphone permission denied';
     _transcript.reset();
@@ -97,6 +101,7 @@ class DeepgramDictation {
       return 'Microphone start failed';
     }
     _active = true;
+    _micBusy = true;
     _audioSub = stream.listen((data) {
       final s = _socket;
       if (s != null) {
@@ -155,6 +160,7 @@ class DeepgramDictation {
   Future<void> _fail(String message) async {
     if (!_active) return;
     _active = false;
+    _micBusy = false;
     _keepAlive?.cancel();
     await _audioSub?.cancel();
     try {
@@ -185,6 +191,7 @@ class DeepgramDictation {
     await _connecting;
     if (!_active) return '';
     _active = false;
+    _micBusy = false;
     _keepAlive?.cancel();
     await _audioSub?.cancel();
     await _recorder.stop();

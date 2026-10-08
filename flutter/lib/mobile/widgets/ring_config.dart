@@ -10,6 +10,8 @@ const List<String> kRingCatalog = [
   'copy',
   'paste',
   'enter',
+  'snip',
+  'shot',
   'home',
   'end',
   'more',
@@ -24,6 +26,7 @@ const List<String> kRingDefault = [
   'copy',
   'paste',
   'enter',
+  'snip',
   'more',
 ];
 
@@ -48,6 +51,9 @@ final List<String> kPanelKeys = [
 const List<String> kRingKeys = ['VK_RETURN', 'VK_HOME', 'VK_END'];
 
 /// Letters used with Ctrl (Cmd on Mac) by the panel and the ring.
+/// Screenshot keys: PrintScreen and Win+Shift+S (region), pasted with Ctrl+V.
+const List<String> kShotKeys = ['VK_SNAPSHOT', 'VK_S'];
+
 const List<String> kChordKeys = ['VK_C', 'VK_V', 'VK_X', 'VK_Z', 'VK_A'];
 
 /// Decodes a saved ring; falls back to the default for empty or broken data.
