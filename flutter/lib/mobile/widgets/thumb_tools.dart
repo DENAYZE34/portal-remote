@@ -11,6 +11,7 @@ import 'package:flutter_hbb/models/platform_model.dart';
 
 import '../../common.dart';
 import '../voice/deepgram_dictation.dart';
+import 'region_snip.dart';
 import 'ring_config.dart';
 
 enum _Mod { ctrl, alt, shift, cmd }
@@ -151,19 +152,6 @@ class _ThumbToolsState extends State<ThumbTools> {
     _im.inputKey(name);
     _im.ctrl = prevCtrl;
     _im.command = prevCmd;
-    _consumeOnce();
-  }
-
-  // Win+Shift+S: Windows region screenshot, goes to the PC clipboard.
-  void _winShift(String name) {
-    HapticFeedback.selectionClick();
-    final prevCmd = _im.command;
-    final prevShift = _im.shift;
-    _im.command = true;
-    _im.shift = true;
-    _im.inputKey(name);
-    _im.command = prevCmd;
-    _im.shift = prevShift;
     _consumeOnce();
   }
 
@@ -381,7 +369,8 @@ class _ThumbToolsState extends State<ThumbTools> {
       case 'enter':
         _key('VK_RETURN');
       case 'snip':
-        _winShift('VK_S');
+        setState(() => _ringOpen = false);
+        startRegionSnip(context, widget.ffi);
       case 'shot':
         _key('VK_SNAPSHOT');
       case 'home':
