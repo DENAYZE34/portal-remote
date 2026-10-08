@@ -66,13 +66,26 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
   Timer? _timer;
   bool _showBar = !isWebDesktop;
   bool _thumbOn = false;
-  String _quality = 'best';
+  String _quality = 'max';
+  Worker? _firstImageWorker;
+  bool _presetApplied = false;
+
+  Future<void> _applyPreset(String preset) async {
+    if (preset == 'max') {
+      await bind.sessionSetImageQuality(sessionId: sessionId, value: 'custom');
+      await bind.sessionSetCustomImageQuality(
+          sessionId: sessionId, value: kMaxPresetQuality);
+      await bind.sessionSetCustomFps(sessionId: sessionId, fps: kMaxPresetFps);
+    } else {
+      await bind.sessionSetImageQuality(sessionId: sessionId, value: preset);
+    }
+    if (mounted) setState(() => _quality = preset);
+  }
 
   Future<void> _cyclePreset() async {
     final current = await bind.sessionGetImageQuality(sessionId: sessionId);
     final next = nextQualityPreset(current);
-    await bind.sessionSetImageQuality(sessionId: sessionId, value: next);
-    if (mounted) setState(() => _quality = next);
+    await _applyPreset(next);
     showToast(qualityPresetLabel(next));
   }
   bool _showGestureHelp = false;
@@ -121,6 +134,12 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
     });
     WakelockManager.enable(_uniqueKey);
     setSessionKeepAlive(true);
+    _firstImageWorker = ever<bool>(gFFI.ffiModel.waitForFirstImage, (waiting) {
+      if (!waiting && !_presetApplied) {
+        _presetApplied = true;
+        _applyPreset('max');
+      }
+    });
     _physicalFocusNode.requestFocus();
     gFFI.inputModel.listenToMouse(true);
     gFFI.qualityMonitorModel.checkShowQualityMonitor(sessionId);
@@ -167,6 +186,7 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
     // pop; the `sessionClose` in `gFFI.close()` becomes a no-op once removed.
     unawaited(bind.sessionClose(sessionId: sessionId));
     setSessionKeepAlive(false);
+    _firstImageWorker?.dispose();
     // https://github.com/flutter/flutter/issues/64935
     super.dispose();
     gFFI.dialogManager.hideMobileActionsOverlay(store: false);

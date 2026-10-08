@@ -2,16 +2,23 @@ import 'package:flutter_hbb/mobile/quality_preset.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('presets cycle speed -> balance -> quality -> speed', () {
+  test('presets cycle speed -> balance -> quality -> max -> speed', () {
     expect(nextQualityPreset('low'), 'balanced');
     expect(nextQualityPreset('balanced'), 'best');
-    expect(nextQualityPreset('best'), 'low');
+    expect(nextQualityPreset('best'), 'max');
+    expect(nextQualityPreset('custom'), 'low'); // custom is the max profile
   });
 
-  test('custom or unknown quality jumps to the sharpest preset', () {
-    expect(nextQualityPreset('custom'), 'best');
-    expect(nextQualityPreset(''), 'best');
-    expect(nextQualityPreset(null), 'best');
+  test('unknown or empty quality is treated as max', () {
+    expect(presetFromSession(null), 'max');
+    expect(presetFromSession(''), 'max');
+    expect(presetFromSession('custom'), 'max');
+    expect(presetFromSession('low'), 'low');
+  });
+
+  test('max profile targets top quality and 60 FPS', () {
+    expect(kMaxPresetFps, 60);
+    expect(kMaxPresetQuality, 100);
   });
 
   test('every preset has a label and an icon', () {

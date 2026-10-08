@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
 
+/// One-tap quality presets, from fastest to sharpest. 'max' is the custom
+/// profile (top bitrate, 60 FPS); the others are the built-in qualities.
+const List<String> kQualityPresets = ['low', 'balanced', 'best', 'max'];
 
-/// One-tap quality presets, from fastest to sharpest.
-const List<String> kQualityPresets = ['low', 'balanced', 'best'];
+/// Custom profile used by 'max'.
+const int kMaxPresetQuality = 100;
+const int kMaxPresetFps = 60;
+
+/// Maps what the session reports ('custom' means our max profile) to a preset.
+String presetFromSession(String? quality) {
+  if (quality == 'custom') return 'max';
+  return kQualityPresets.contains(quality) ? quality! : 'max';
+}
 
 String nextQualityPreset(String? current) {
-  final i = kQualityPresets.indexOf(current ?? '');
-  // Unknown values (custom, empty) jump to the sharpest preset.
-  return i < 0 ? 'best' : kQualityPresets[(i + 1) % kQualityPresets.length];
+  final i = kQualityPresets.indexOf(presetFromSession(current));
+  return kQualityPresets[(i + 1) % kQualityPresets.length];
 }
 
 String qualityPresetLabel(String preset) {
@@ -16,8 +25,10 @@ String qualityPresetLabel(String preset) {
       return 'Скорость';
     case 'balanced':
       return 'Баланс';
-    default:
+    case 'best':
       return 'Качество';
+    default:
+      return 'Максимум';
   }
 }
 
@@ -27,7 +38,9 @@ IconData qualityPresetIcon(String preset) {
       return Icons.bolt;
     case 'balanced':
       return Icons.tune;
-    default:
+    case 'best':
       return Icons.hd;
+    default:
+      return Icons.rocket_launch;
   }
 }
