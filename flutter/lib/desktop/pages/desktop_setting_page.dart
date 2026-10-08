@@ -997,6 +997,7 @@ class _SafetyState extends State<_Safety> with AutomaticKeepAliveClientMixin {
               child: Column(children: [
                 permissions(context),
                 password(context),
+                const _PairingCard(),
                 _Card(title: '2FA', children: [tfa()]),
                 if (!isChangeIdDisabled())
                   _Card(title: 'ID', children: [changeId()]),
@@ -3287,3 +3288,72 @@ void changeSocks5Proxy() async {
 }
 
 //#endregion
+
+/// Paired devices: with "only paired" on, a correct password is not enough,
+/// the device must have connected while pairing was open (5 minutes).
+class _PairingCard extends StatefulWidget {
+  const _PairingCard({Key? key}) : super(key: key);
+
+  @override
+  State<_PairingCard> createState() => _PairingCardState();
+}
+
+class _PairingCardState extends State<_PairingCard> {
+  static const _kOnly = 'paired-only';
+  static const _kUntil = 'pairing-until';
+  static const _kPeers = 'paired-peers';
+
+  int get _now => DateTime.now().millisecondsSinceEpoch ~/ 1000;
+  int get _until => int.tryParse(bind.mainGetOptionSync(key: _kUntil)) ?? 0;
+  bool get _open => _until > _now;
+  int get _count => bind.mainGetOptionSync(key: _kPeers)
+      .split(',')
+      .where((e) => e.trim().isNotEmpty)
+      .length;
+
+  @override
+  Widget build(BuildContext context) {
+    final only = bind.mainGetOptionSync(key: _kOnly) == 'Y';
+    final until = DateTime.fromMillisecondsSinceEpoch(_until * 1000);
+    final hh = until.hour.toString().padLeft(2, '0');
+    final mm = until.minute.toString().padLeft(2, '0');
+    return _Card(title: 'Сопряжение устройств', children: [
+      Row(children: [
+        Checkbox(
+          value: only,
+          onChanged: (v) async {
+            await bind.mainSetOption(key: _kOnly, value: v == true ? 'Y' : 'N');
+            setState(() {});
+          },
+        ),
+        const Expanded(
+            child: Text('Принимать только сопряжённые устройства '
+                '(правильного пароля мало)')),
+      ]),
+      const SizedBox(height: 6),
+      Text(_open
+          ? 'Сопряжение открыто до $hh:$mm: подключите новое устройство.'
+          : 'Сопряжение закрыто. Сопряжённых устройств: $_count.'),
+      const SizedBox(height: 8),
+      Row(children: [
+        ElevatedButton(
+          onPressed: () async {
+            await bind.mainSetOption(
+                key: _kUntil, value: (_now + 300).toString());
+            setState(() {});
+          },
+          child: const Text('Открыть сопряжение на 5 минут'),
+        ),
+        const SizedBox(width: 12),
+        TextButton(
+          onPressed: () async {
+            await bind.mainSetOption(key: _kUntil, value: '');
+            await bind.mainSetOption(key: _kPeers, value: '');
+            setState(() {});
+          },
+          child: const Text('Сбросить сопряжение'),
+        ),
+      ]),
+    ]);
+  }
+}

@@ -72,6 +72,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Please enter your password", "Введите пароль"),
         ("Remember password", "Запомнить пароль"),
         ("Wrong Password", "Неправильный пароль"),
+        ("Device not paired", "Устройство не сопряжено. На ПК включите сопряжение: Настройки, Безопасность."),
         ("Do you want to enter again?", "Повторить вход?"),
         ("Connection Error", "Ошибка подключения"),
         ("Error", "Ошибка"),

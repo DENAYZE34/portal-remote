@@ -2339,6 +2339,34 @@ impl Connection {
             && crate::get_builtin_option(keys::OPTION_ONE_WAY_FILE_TRANSFER) != "Y"
     }
 
+    /// Paired-devices policy. Returns false after telling the client when the
+    /// device is unknown and pairing is closed.
+    async fn pairing_allows(&mut self, peer_id: &str, name: &str) -> bool {
+        use crate::pairing::{self, Decision};
+        let now = (hbb_common::get_time() / 1000).max(0) as u64;
+        let decision = pairing::decide(
+            Config::get_option(pairing::OPTION_PAIRED_ONLY) == "Y",
+            &Config::get_option(pairing::OPTION_PAIRED_PEERS),
+            peer_id,
+            &Config::get_option(pairing::OPTION_PAIRING_UNTIL),
+            now,
+        );
+        match decision {
+            Decision::Allow => true,
+            Decision::AllowAndPair => {
+                let list = pairing::add(&Config::get_option(pairing::OPTION_PAIRED_PEERS), peer_id);
+                Config::set_option(pairing::OPTION_PAIRED_PEERS.to_owned(), list);
+                true
+            }
+            Decision::Deny => {
+                log::warn!("login from unpaired device {} refused", peer_id);
+                self.send_login_error(crate::client::LOGIN_MSG_NOT_PAIRED).await;
+                self.try_start_cm(peer_id.to_owned(), name.to_owned(), false);
+                false
+            }
+        }
+    }
+
     fn try_start_cm(&mut self, peer_id: String, name: String, authorized: bool) {
         self.send_to_cm(ipc::Data::Login {
             id: self.inner.id(),
@@ -3036,6 +3064,9 @@ impl Connection {
                     self.try_start_cm(lr.my_id, lr.my_name, false);
                 } else {
                     self.update_failure_with_scope(failure, true, 0, FailureScope::Default);
+                    if !self.pairing_allows(&lr.my_id, &lr.my_name).await {
+                        return true;
+                    }
                     if !self.send_logon_response_and_keep_alive().await {
                         return false;
                     }

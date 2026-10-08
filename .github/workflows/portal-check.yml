@@ -8,6 +8,7 @@ name: Portal check
       - flutter/test/cert_pin_test.dart
       - flutter/test/thumb_keys_test.dart
       - flutter/test/update_check_test.dart
+      - src/pairing.rs
       - flutter/test/auto_reconnect_test.dart
       - flutter/test/zoom_logic_test.dart
       - flutter/lib/mobile/zoom_logic.dart
@@ -34,6 +35,10 @@ jobs:
         with:
           channel: stable
           flutter-version: 3.24.5
+      - name: Test pairing policy (Rust, std only)
+        run: |
+          rustc --edition 2021 --test src/pairing.rs -o /tmp/pairing_test
+          /tmp/pairing_test
       - name: Get packages
         working-directory: flutter
         run: flutter pub get
