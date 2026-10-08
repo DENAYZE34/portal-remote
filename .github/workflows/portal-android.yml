@@ -238,10 +238,10 @@ jobs:
           export PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH
           # Increase Gradle JVM memory for CI builds
           sed -i "s/org.gradle.jvmargs=-Xmx1024M/org.gradle.jvmargs=-Xmx2g/g" ./flutter/android/gradle.properties
-          # stable signing key (secret) so every build installs over the previous one
-          mkdir -p ~/.android && echo "$ANDROID_DEBUG_KEYSTORE_B64" | base64 -d > ~/.android/debug.keystore
-          # temporary use debug sign config
-          sed -i "s/signingConfigs.release/signingConfigs.debug/g" ./flutter/android/app/build.gradle
+          # Sign the release with our own key (secret) so every build installs over the previous one.
+          # The release config in build.gradle reads flutter/android/key.properties.
+          echo "$ANDROID_DEBUG_KEYSTORE_B64" | base64 -d > "$GITHUB_WORKSPACE/portal.keystore"
+          printf "storeFile=%s\nstorePassword=android\nkeyAlias=androiddebugkey\nkeyPassword=android\n" "$GITHUB_WORKSPACE/portal.keystore" > ./flutter/android/key.properties
           case ${{ matrix.job.target }} in
             aarch64-linux-android)
               mkdir -p ./flutter/android/app/src/main/jniLibs/arm64-v8a
@@ -283,6 +283,14 @@ jobs:
           popd
           mkdir -p signed-apk; pushd signed-apk
           mv ../rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk .
+
+      - name: Verify signing key
+        shell: bash
+        run: |
+          APK=signed-apk/rustdesk-${{ env.VERSION }}-aarch64.apk
+          KT=$(command -v keytool || echo /usr/lib/jvm/java-17-openjdk-amd64/bin/keytool)
+          "$KT" -printcert -jarfile "$APK" | tee cert.txt
+          grep -q "CN=PortalDesk" cert.txt || { echo "APK is not signed with the PortalDesk key"; exit 1; }
 
       - name: Package apk
         id: pkg
