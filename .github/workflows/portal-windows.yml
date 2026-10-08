@@ -14,7 +14,7 @@ env:
   FLUTTER_WINDOWS_ARM_VERSION: 3.44.9
   FLUTTER_ELINUX_VERSION: 3.16.9
   TAG_NAME: portal
-  VCPKG_BINARY_SOURCES: clear;x-gha,readwrite
+  VCPKG_BINARY_SOURCES: clear;files,C:/vcpkg-bincache,readwrite
   VCPKG_COMMIT_ID: 9e593bb18ea69cc5095e012465dcd675a822ed0d
   VCPKG_CMAKE_VERSION: 4.3.0
   ARMV7_VCPKG_COMMIT_ID: 6f29f12e82a8293156836ad81cc9bf5af41fe836
@@ -128,6 +128,18 @@ jobs:
         vcpkgDirectory: C:\vcpkg
         vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
         doNotCache: false
+    - name: Prepare vcpkg binary cache dir
+      shell: bash
+      run: mkdir -p /c/vcpkg-bincache
+
+    - name: Restore vcpkg binary cache
+      uses: actions/cache@v4
+      with:
+        path: C:/vcpkg-bincache
+        key: vcpkg-win-${{ matrix.job.vcpkg-triplet }}-${{ env.VCPKG_COMMIT_ID }}-${{ hashFiles('vcpkg.json') }}
+        restore-keys: |
+          vcpkg-win-${{ matrix.job.vcpkg-triplet }}-${{ env.VCPKG_COMMIT_ID }}-
+
     - name: Install vcpkg dependencies
       env:
         VCPKG_DEFAULT_HOST_TRIPLET: ${{ matrix.job.vcpkg-triplet }}

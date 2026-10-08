@@ -14,7 +14,7 @@ env:
   FLUTTER_WINDOWS_ARM_VERSION: 3.44.9
   FLUTTER_ELINUX_VERSION: 3.16.9
   TAG_NAME: ${{ inputs.upload-tag }}
-  VCPKG_BINARY_SOURCES: clear;x-gha,readwrite
+  VCPKG_BINARY_SOURCES: clear;files,/opt/vcpkg-bincache,readwrite
   VCPKG_COMMIT_ID: 9e593bb18ea69cc5095e012465dcd675a822ed0d
   VCPKG_CMAKE_VERSION: 4.3.0
   ARMV7_VCPKG_COMMIT_ID: 6f29f12e82a8293156836ad81cc9bf5af41fe836
@@ -126,6 +126,18 @@ jobs:
           vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
           doNotCache: false
 
+      - name: Prepare vcpkg binary cache dir
+        shell: bash
+        run: sudo mkdir -p /opt/vcpkg-bincache && sudo chown "$USER" /opt/vcpkg-bincache
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v4
+        with:
+          path: /opt/vcpkg-bincache
+          key: vcpkg-android-${{ matrix.job.target }}-${{ env.VCPKG_COMMIT_ID }}-${{ hashFiles('vcpkg.json', 'flutter/build_android_deps.sh') }}
+          restore-keys: |
+            vcpkg-android-${{ matrix.job.target }}-${{ env.VCPKG_COMMIT_ID }}-
+
       - name: Install vcpkg dependencies
         run: |
           case ${{ matrix.job.target }} in
@@ -206,6 +218,16 @@ jobs:
         with:
           name: librustdesk.so.${{ matrix.job.target }}
           path: ./target/${{ matrix.job.target }}/release/liblibrustdesk.so
+
+      - name: Restore Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('flutter/android/**/*.gradle', 'flutter/android/gradle/wrapper/gradle-wrapper.properties', 'flutter/pubspec.lock') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
 
       - name: Build rustdesk
         shell: bash
