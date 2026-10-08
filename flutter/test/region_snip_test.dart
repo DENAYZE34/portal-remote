@@ -1,6 +1,4 @@
-import 'dart:ui';
-
-import 'package:flutter_hbb/mobile/widgets/region_snip.dart';
+import 'package:flutter_hbb/mobile/snip_logic.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

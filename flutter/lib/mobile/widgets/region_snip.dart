@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +6,7 @@ import 'package:flutter_hbb/models/input_model.dart';
 import 'package:flutter_hbb/models/model.dart';
 
 import '../../common.dart';
+import '../snip_logic.dart';
 
 /// Region screenshot of the remote PC, done from the phone:
 /// 1. the user draws a rectangle on the phone screen,
@@ -31,15 +31,6 @@ Future<void> startRegionSnip(BuildContext context, FFI ffi) async {
     ),
   );
   overlay.insert(entry);
-}
-
-/// Points of a straight drag from [a] to [b] in [steps] equal steps (both ends included).
-List<Offset> dragPath(Offset a, Offset b, int steps) {
-  final n = math.max(1, steps);
-  return [
-    for (var i = 0; i <= n; i++)
-      Offset(a.dx + (b.dx - a.dx) * i / n, a.dy + (b.dy - a.dy) * i / n)
-  ];
 }
 
 Future<void> _performSnip(FFI ffi, Rect rect) async {
