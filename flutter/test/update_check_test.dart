@@ -32,6 +32,24 @@ void main() {
     expect(abiSuffix('3.5.4 (stable) on "windows_x64"'), '');
   });
 
+  test('release notes list is parsed from the body', () {
+    final h = 'a' * 64;
+    expect(parseReleaseNotes('build 5\nsha256 $h\n- Fix zoom\n- Faster start'),
+        ['Fix zoom', 'Faster start']);
+    expect(parseReleaseNotes('build 5\nsha256 $h'), isEmpty);
+    expect(parseReleaseNotes(null), isEmpty);
+    expect(parseReleaseNotes('- a\n- b\n- c', max: 2), ['a', 'b']);
+    expect(parseReleaseNotes('-\n- \nplain'), isEmpty);
+  });
+
+  test('automatic checks are throttled to once per six hours', () {
+    final now = DateTime(2026, 10, 9, 12);
+    expect(shouldCheckNow(null, now), isTrue);
+    expect(shouldCheckNow(now.subtract(const Duration(hours: 1)), now), isFalse);
+    expect(shouldCheckNow(now.subtract(const Duration(hours: 6)), now), isTrue);
+    expect(shouldCheckNow(now.subtract(const Duration(days: 2)), now), isTrue);
+  });
+
   test('a download is accepted only when its hash matches exactly', () {
     final bytes = [1, 2, 3, 4];
     const good =

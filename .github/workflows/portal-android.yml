@@ -326,6 +326,18 @@ jobs:
           name: portal-android${{ matrix.job.apk }}
           path: out/PortalDesk-android${{ matrix.job.apk }}.apk
 
+      - name: Release notes
+        id: notes
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            echo "text<<EOF"
+            gh api "repos/${{ github.repository }}/commits?per_page=5&sha=${{ github.sha }}" --jq '.[].commit.message | split("\n")[0] | "- " + .' || true
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Publish Android release
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
         with:
@@ -334,6 +346,7 @@ jobs:
           body: |
             build ${{ github.run_number }}
             sha256 ${{ steps.pkg.outputs.sha }}
+            ${{ steps.notes.outputs.text }}
           prerelease: true
           make_latest: 'false'
           files: out/PortalDesk-android${{ matrix.job.apk }}.apk

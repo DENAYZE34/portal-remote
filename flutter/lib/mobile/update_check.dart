@@ -18,54 +18,104 @@ final String _kReleaseApi =
 final String _kApkUrl =
     'https://github.com/DENAYZE34/portal-remote/releases/download/android$_kAbi-latest/PortalDesk-android$_kAbi.apk';
 
-/// Asks GitHub for the latest Android release and offers an in-app update when
-/// it is newer than this build. Silent on every failure.
-Future<void> checkForPortalUpdate(BuildContext context,
-    {bool manual = false}) async {
-  final local = int.tryParse(_kBuild);
-  if (!isAndroid) return;
-  if (local == null) {
-    if (manual) showToast('Версия сборки неизвестна');
-    return;
-  }
+/// Newest build seen on GitHub (null until the first successful check); the
+/// Settings tile shows it.
+final ValueNotifier<int?> portalLatestBuild = ValueNotifier<int?>(null);
+
+/// This build number (null in dev builds).
+int? get portalCurrentBuild => int.tryParse(_kBuild);
+
+DateTime? _lastCheck;
+
+class PortalUpdate {
+  final int build;
+  final String sha;
+  final List<String> notes;
+  const PortalUpdate(this.build, this.sha, this.notes);
+}
+
+/// Reads the latest release. Returns the update only when it is newer than
+/// this build; null otherwise or on any failure ([failed] tells which).
+Future<PortalUpdate?> _fetch(void Function() failed) async {
+  final local = portalCurrentBuild;
+  if (local == null) return null;
   try {
     final resp = await http
         .get(Uri.parse(_kReleaseApi),
             headers: {'Accept': 'application/vnd.github+json'})
         .timeout(const Duration(seconds: 8));
     if (resp.statusCode != 200) {
-      if (manual) showToast('Не удалось проверить обновления');
-      return;
+      failed();
+      return null;
     }
     final body = (jsonDecode(resp.body) as Map<String, dynamic>)['body'];
     final text = body is String ? body : null;
     final remote = parseReleaseBuild(text);
     final sha = parseReleaseSha(text);
-    if (!isNewerBuild(remote, local) || sha == null || !context.mounted) {
-      if (manual) showToast('У вас последняя версия (сборка $local)');
-      return;
+    if (remote != null) portalLatestBuild.value = remote;
+    if (remote == null || sha == null || !isNewerBuild(remote, local)) {
+      return null;
     }
-    final yes = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Доступно обновление PortalDesk'),
-        content: Text('Новая сборка $remote (у вас $local). '
-            'Загрузка и проверка пройдут внутри приложения.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Позже')),
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Обновить')),
+    return PortalUpdate(remote, sha, parseReleaseNotes(text));
+  } catch (_) {
+    failed();
+    return null;
+  }
+}
+
+/// Offers an in-app update when GitHub has a newer build. Automatic checks run
+/// at most every 6 hours; [manual] checks always run and always answer.
+Future<void> checkForPortalUpdate(BuildContext context,
+    {bool manual = false}) async {
+  if (!isAndroid) return;
+  final local = portalCurrentBuild;
+  if (local == null) {
+    if (manual) showToast('Версия сборки неизвестна');
+    return;
+  }
+  if (!manual && !shouldCheckNow(_lastCheck, DateTime.now())) return;
+  _lastCheck = DateTime.now();
+  var failed = false;
+  final update = await _fetch(() => failed = true);
+  if (!context.mounted) return;
+  if (update == null) {
+    if (manual) {
+      showToast(failed
+          ? 'Не удалось проверить обновления. Проверьте интернет.'
+          : 'У вас последняя версия (сборка $local)');
+    }
+    return;
+  }
+  final yes = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Доступно обновление PortalDesk'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Новая сборка ${update.build} (у вас $local). '
+              'Настройки, ID и пароль сохранятся.'),
+          if (update.notes.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const Text('Что нового:',
+                style: TextStyle(fontWeight: FontWeight.w600)),
+            for (final n in update.notes) Text('• $n'),
+          ],
         ],
       ),
-    );
-    if (yes == true && context.mounted) {
-      await _downloadAndInstall(context, sha);
-    }
-  } catch (_) {
-    if (manual) showToast('Нет связи с сервером обновлений');
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Позже')),
+        FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Обновить')),
+      ],
+    ),
+  );
+  if (yes == true && context.mounted) {
+    await _downloadAndInstall(context, update.sha);
   }
 }
 
@@ -120,8 +170,35 @@ Future<void> _downloadAndInstall(BuildContext context, String sha) async {
     showToast(error);
     return;
   }
+  await _install(path!);
+}
+
+/// Hands the verified file to the system installer. When Android has not yet
+/// allowed this app to install packages, the settings page opens and the
+/// install is retried automatically when the user comes back.
+Future<void> _install(String path) async {
   final res = await gFFI.invokeMethod('install_apk', path);
-  if (res != true) {
-    showToast('Разрешите установку для PortalDesk и нажмите «Обновить» снова.');
+  if (res == true) return;
+  showToast('Включите «Установка неизвестных приложений» для PortalDesk и '
+      'вернитесь: обновление продолжится само.');
+  WidgetsBinding.instance.addObserver(_ResumeOnce(() async {
+    final again = await gFFI.invokeMethod('install_apk', path);
+    if (again != true) {
+      showToast('Разрешение не включено. Нажмите «Проверить обновления» снова.');
+    }
+  }));
+}
+
+/// Runs [action] the first time the app returns to the foreground.
+class _ResumeOnce with WidgetsBindingObserver {
+  final Future<void> Function() action;
+  _ResumeOnce(this.action);
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      WidgetsBinding.instance.removeObserver(this);
+      action();
+    }
   }
 }

@@ -30,3 +30,22 @@ String abiSuffix(String dartVersion) {
   if (dartVersion.contains('android_x64')) return '-x86_64';
   return '';
 }
+
+/// "What is new" lines from the release notes: lines starting with "- ", at most [max].
+List<String> parseReleaseNotes(String? body, {int max = 6}) {
+  final out = <String>[];
+  for (final line in (body ?? '').split('\n')) {
+    final t = line.trim();
+    if (t.startsWith('- ') && t.length > 2) {
+      out.add(t.substring(2).trim());
+      if (out.length >= max) break;
+    }
+  }
+  return out;
+}
+
+/// Automatic checks run at most once per [every]; manual checks always run.
+bool shouldCheckNow(DateTime? last, DateTime now,
+    {Duration every = const Duration(hours: 6)}) {
+  return last == null || now.difference(last) >= every;
+}

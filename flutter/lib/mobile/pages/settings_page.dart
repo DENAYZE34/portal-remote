@@ -793,6 +793,17 @@ class _SettingsState extends State<SettingsPage> with WidgetsBindingObserver {
           if (isAndroid)
             SettingsTile(
                 title: const Text('Проверить обновления'),
+                description: ValueListenableBuilder<int?>(
+                  valueListenable: portalLatestBuild,
+                  builder: (_, latest, __) {
+                    final cur = portalCurrentBuild;
+                    if (cur == null) return const Text('Сборка неизвестна');
+                    if (latest != null && latest > cur) {
+                      return Text('Установлена $cur, доступна $latest');
+                    }
+                    return Text('Установлена сборка $cur');
+                  },
+                ),
                 leading: const Icon(Icons.system_update),
                 onPressed: (context) =>
                     checkForPortalUpdate(context, manual: true)),
