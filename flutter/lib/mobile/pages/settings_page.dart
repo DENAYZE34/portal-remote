@@ -19,6 +19,7 @@ import '../../models/model.dart';
 import '../../models/platform_model.dart';
 import '../widgets/deploy_dialog.dart';
 import '../widgets/dialog.dart';
+import 'package:flutter/services.dart';
 import '../crash_log.dart';
 import '../update_check.dart';
 import '../wizard.dart';
