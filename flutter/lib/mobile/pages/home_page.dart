@@ -9,6 +9,7 @@ import '../../models/platform_model.dart';
 import '../../models/state_model.dart';
 import 'connection_page.dart';
 import '../stability.dart';
+import '../wizard.dart';
 import '../update_check.dart';
 
 abstract class PageShape extends Widget {
@@ -48,14 +49,19 @@ class HomePageState extends State<HomePage> {
     if (isAndroid) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        showStabilitySetupOnce(context).then((_) {
+        showFirstRunWizardOnce(context)
+            .then((_) => showStabilitySetupOnce(context))
+            .then((_) {
           if (mounted) checkForPortalUpdate(context);
         });
       });
     } else if (isIOS) {
       initPortalBuild();
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) checkForPortalUpdate(context);
+        if (!mounted) return;
+        showFirstRunWizardOnce(context).then((_) {
+          if (mounted) checkForPortalUpdate(context);
+        });
       });
     }
   }

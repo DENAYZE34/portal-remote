@@ -19,7 +19,9 @@ import '../../models/model.dart';
 import '../../models/platform_model.dart';
 import '../widgets/deploy_dialog.dart';
 import '../widgets/dialog.dart';
+import '../crash_log.dart';
 import '../update_check.dart';
+import '../wizard.dart';
 import '../widgets/zoom_widgets.dart';
 import '../zoom_logic.dart';
 import 'home_page.dart';
@@ -784,6 +786,23 @@ class _SettingsState extends State<SettingsPage> with WidgetsBindingObserver {
                 leading: const Icon(Icons.system_update),
                 onPressed: (context) =>
                     checkForPortalUpdate(context, manual: true)),
+          SettingsTile(
+              title: const Text('Руководство по подключению'),
+              leading: const Icon(Icons.help_outline),
+              onPressed: (context) => showFirstRunWizard(context)),
+          SettingsTile(
+              title: const Text('Скопировать журнал сбоев'),
+              description: const Text('Для отправки разработчику, с телефона ничего не уходит'),
+              leading: const Icon(Icons.bug_report_outlined),
+              onPressed: (context) async {
+                final log = await readCrashLog();
+                if (log.isEmpty) {
+                  showToast('Сбоев не было');
+                } else {
+                  await Clipboard.setData(ClipboardData(text: log));
+                  showToast('Журнал скопирован (${log.length} символов)');
+                }
+              }),
           SettingsTile.switchTile(
             title: const Text('Показать все настройки'),
             description: const Text('Сеть, сервер, кодеки, безопасность'),
