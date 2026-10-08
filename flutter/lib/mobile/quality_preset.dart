@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 const List<String> kQualityPresets = ['low', 'balanced', 'best', 'max'];
 
 /// Custom profile used by 'max'.
-const int kMaxPresetQuality = 100;
+// Host bitrate = base(1080p 2.07 Mbps) * quality*2/100, so 300 is about 12 Mbps at
+// 1080p. The host lowers it by itself when the network delay grows.
+const int kMaxPresetQuality = 300;
 const int kMaxPresetFps = 60;
 
 /// Maps what the session reports ('custom' means our max profile) to a preset.

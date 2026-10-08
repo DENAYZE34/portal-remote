@@ -18,7 +18,7 @@ void main() {
 
   test('max profile targets top quality and 60 FPS', () {
     expect(kMaxPresetFps, 60);
-    expect(kMaxPresetQuality, 100);
+    expect(kMaxPresetQuality, 300);
   });
 
   test('every preset has a label and an icon', () {
