@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_hbb/mobile/auto_reconnect.dart';
+import 'package:flutter_hbb/mobile/connection_doctor.dart';
 import 'package:flutter_hbb/common/widgets/peers_view.dart';
 import 'package:flutter_hbb/consts.dart';
 import 'package:flutter_hbb/models/ab_model.dart';
@@ -979,7 +980,11 @@ class FfiModel with ChangeNotifier {
       if (!hasRetry) {
         hasRetry = shouldAutoRetryOnOffline(type, title, text);
       }
-      showMsgBox(sessionId, type, title, text, link, hasRetry, dialogManager);
+      // Plain-language explanation for known connection errors.
+      final shown = (type == 'error' || title == 'Connection Error')
+          ? (diagnoseConnection(title, text) ?? text)
+          : text;
+      showMsgBox(sessionId, type, title, shown, link, hasRetry, dialogManager);
     }
   }
 

@@ -10,10 +10,12 @@ name: Portal check
       - flutter/test/update_check_test.dart
       - src/pairing.rs
       - flutter/test/auto_reconnect_test.dart
-      - flutter/test/zoom_logic_test.dart test/region_snip_test.dart
+      - flutter/test/zoom_logic_test.dart
+      - flutter/test/connection_doctor_test.dart
+      - flutter/lib/mobile/connection_doctor.dart test/region_snip_test.dart test/connection_doctor_test.dart
       - flutter/lib/mobile/zoom_logic.dart
       - flutter/lib/mobile/widgets/zoom_widgets.dart
-      - flutter/test/deepgram_replay_test.dart test/zoom_logic_test.dart test/region_snip_test.dart
+      - flutter/test/deepgram_replay_test.dart test/zoom_logic_test.dart test/region_snip_test.dart test/connection_doctor_test.dart
       - flutter/test/fixtures/**
       - flutter/test/quality_preset_test.dart
       - flutter/lib/mobile/quality_preset.dart
@@ -44,7 +46,7 @@ jobs:
         run: flutter pub get
       - name: Analyze voice code
         working-directory: flutter
-        run: flutter analyze --no-fatal-infos lib/mobile/voice lib/mobile/widgets/ring_config.dart lib/mobile/widgets/thumb_tools.dart lib/mobile/update_check.dart lib/mobile/update_logic.dart lib/mobile/auto_reconnect.dart lib/mobile/stability.dart lib/mobile/quality_preset.dart lib/mobile/widgets/voice_toggle.dart lib/mobile/widgets/zoom_widgets.dart lib/mobile/widgets/region_snip.dart lib/mobile/snip_logic.dart lib/mobile/zoom_logic.dart lib/mobile/pages/home_page.dart test/deepgram_transcript_test.dart test/cert_pin_test.dart test/thumb_keys_test.dart test/update_check_test.dart test/auto_reconnect_test.dart test/quality_preset_test.dart test/deepgram_replay_test.dart test/zoom_logic_test.dart test/region_snip_test.dart
+        run: flutter analyze --no-fatal-infos lib/mobile/voice lib/mobile/widgets/ring_config.dart lib/mobile/widgets/thumb_tools.dart lib/mobile/update_check.dart lib/mobile/update_logic.dart lib/mobile/auto_reconnect.dart lib/mobile/stability.dart lib/mobile/quality_preset.dart lib/mobile/widgets/voice_toggle.dart lib/mobile/widgets/zoom_widgets.dart lib/mobile/widgets/region_snip.dart lib/mobile/snip_logic.dart lib/mobile/connection_doctor.dart lib/mobile/zoom_logic.dart lib/mobile/pages/home_page.dart test/deepgram_transcript_test.dart test/cert_pin_test.dart test/thumb_keys_test.dart test/update_check_test.dart test/auto_reconnect_test.dart test/quality_preset_test.dart test/deepgram_replay_test.dart test/zoom_logic_test.dart test/region_snip_test.dart test/connection_doctor_test.dart
       - name: Run voice tests
         working-directory: flutter
-        run: flutter test --timeout 60s test/deepgram_transcript_test.dart test/cert_pin_test.dart test/thumb_keys_test.dart test/update_check_test.dart test/auto_reconnect_test.dart test/quality_preset_test.dart test/deepgram_replay_test.dart test/zoom_logic_test.dart test/region_snip_test.dart
+        run: flutter test --timeout 60s test/deepgram_transcript_test.dart test/cert_pin_test.dart test/thumb_keys_test.dart test/update_check_test.dart test/auto_reconnect_test.dart test/quality_preset_test.dart test/deepgram_replay_test.dart test/zoom_logic_test.dart test/region_snip_test.dart test/connection_doctor_test.dart
