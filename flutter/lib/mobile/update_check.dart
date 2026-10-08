@@ -11,10 +11,12 @@ import 'update_logic.dart';
 export 'update_logic.dart';
 
 const String _kBuild = String.fromEnvironment('PORTAL_BUILD');
-const String _kReleaseApi =
-    'https://api.github.com/repos/DENAYZE34/portal-remote/releases/tags/android-latest';
-const String _kApkUrl =
-    'https://github.com/DENAYZE34/portal-remote/releases/download/android-latest/PortalDesk-android.apk';
+// 64-bit ARM phones use android-latest; 32-bit ARM and x86_64 have their own releases.
+final String _kAbi = abiSuffix(Platform.version);
+final String _kReleaseApi =
+    'https://api.github.com/repos/DENAYZE34/portal-remote/releases/tags/android$_kAbi-latest';
+final String _kApkUrl =
+    'https://github.com/DENAYZE34/portal-remote/releases/download/android$_kAbi-latest/PortalDesk-android$_kAbi.apk';
 
 /// Asks GitHub for the latest Android release and offers an in-app update when
 /// it is newer than this build. Silent on every failure.

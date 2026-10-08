@@ -25,6 +25,13 @@ void main() {
     expect(parseReleaseSha(null), isNull);
   });
 
+  test('release suffix follows the device CPU', () {
+    expect(abiSuffix('3.5.4 (stable) on "android_arm64"'), '');
+    expect(abiSuffix('3.5.4 (stable) on "android_arm"'), '-armv7');
+    expect(abiSuffix('3.5.4 (stable) on "android_x64"'), '-x86_64');
+    expect(abiSuffix('3.5.4 (stable) on "windows_x64"'), '');
+  });
+
   test('a download is accepted only when its hash matches exactly', () {
     final bytes = [1, 2, 3, 4];
     const good =

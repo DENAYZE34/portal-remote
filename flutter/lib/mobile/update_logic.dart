@@ -21,3 +21,12 @@ bool digestMatches(List<int> bytes, String? expectedHex) {
   if (expectedHex == null || expectedHex.length != 64) return false;
   return sha256.convert(bytes).toString() == expectedHex.toLowerCase();
 }
+
+/// Release suffix for the device CPU, from Dart's `Platform.version`
+/// ("... on \"android_arm64\""). 64-bit ARM has no suffix.
+String abiSuffix(String dartVersion) {
+  if (dartVersion.contains('android_arm64')) return '';
+  if (dartVersion.contains('android_arm')) return '-armv7';
+  if (dartVersion.contains('android_x64')) return '-x86_64';
+  return '';
+}

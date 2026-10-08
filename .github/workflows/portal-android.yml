@@ -38,6 +38,26 @@ jobs:
               os: ubuntu-24.04,
               reltype: release,
               suffix: "",
+              apk: "",
+              tag: android-latest,
+            }
+          - {
+              arch: armv7,
+              target: armv7-linux-androideabi,
+              os: ubuntu-24.04,
+              reltype: release,
+              suffix: "",
+              apk: "-armv7",
+              tag: android-armv7-latest,
+            }
+          - {
+              arch: x86_64,
+              target: x86_64-linux-android,
+              os: ubuntu-24.04,
+              reltype: release,
+              suffix: "",
+              apk: "-x86_64",
+              tag: android-x86_64-latest,
             }
     steps:
       - name: Free Disk Space (Ubuntu)
@@ -123,7 +143,7 @@ jobs:
         uses: lukka/run-vcpkg@b1a0dd252f06b9e25b3c022a9a03bd7a427fb6a2 # v11
         with:
           vcpkgDirectory: /opt/artifacts/vcpkg
-          vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
+          vcpkgGitCommitId: ${{ matrix.job.arch == 'armv7' && env.ARMV7_VCPKG_COMMIT_ID || env.VCPKG_COMMIT_ID }}
           doNotCache: false
 
       - name: Prepare vcpkg binary cache dir
@@ -134,9 +154,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /opt/vcpkg-bincache
-          key: vcpkg-android-${{ matrix.job.target }}-${{ env.VCPKG_COMMIT_ID }}-${{ hashFiles('vcpkg.json', 'flutter/build_android_deps.sh') }}
+          key: vcpkg-android-${{ matrix.job.target }}-${{ matrix.job.arch == 'armv7' && env.ARMV7_VCPKG_COMMIT_ID || env.VCPKG_COMMIT_ID }}-${{ hashFiles('vcpkg.json', 'flutter/build_android_deps.sh') }}
           restore-keys: |
-            vcpkg-android-${{ matrix.job.target }}-${{ env.VCPKG_COMMIT_ID }}-
+            vcpkg-android-${{ matrix.job.target }}-${{ matrix.job.arch == 'armv7' && env.ARMV7_VCPKG_COMMIT_ID || env.VCPKG_COMMIT_ID }}-
 
       - name: Install vcpkg dependencies
         run: |
@@ -258,7 +278,7 @@ jobs:
               cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/armeabi-v7a/librustdesk.so
               # build flutter
               pushd flutter
-              flutter build apk "--${{ matrix.job.reltype }}" --target-platform android-arm --split-per-abi
+              flutter build apk "--${{ matrix.job.reltype }}" --target-platform android-arm --split-per-abi "--dart-define=PORTAL_BUILD=${{ github.run_number }}" "--dart-define=PORTAL_DG_URL=${{ secrets.PORTAL_DG_URL }}" "--dart-define=PORTAL_DG_SECRET=${{ secrets.PORTAL_DG_SECRET }}" "--dart-define=PORTAL_DG_FP=${{ secrets.PORTAL_DG_FP }}"
               mv build/app/outputs/flutter-apk/app-armeabi-v7a-${{ matrix.job.reltype }}.apk ../rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk
             ;;
             x86_64-linux-android)
@@ -267,7 +287,7 @@ jobs:
               cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/x86_64/librustdesk.so
               # build flutter
               pushd flutter
-              flutter build apk "--${{ matrix.job.reltype }}" --target-platform android-x64 --split-per-abi
+              flutter build apk "--${{ matrix.job.reltype }}" --target-platform android-x64 --split-per-abi "--dart-define=PORTAL_BUILD=${{ github.run_number }}" "--dart-define=PORTAL_DG_URL=${{ secrets.PORTAL_DG_URL }}" "--dart-define=PORTAL_DG_SECRET=${{ secrets.PORTAL_DG_SECRET }}" "--dart-define=PORTAL_DG_FP=${{ secrets.PORTAL_DG_FP }}"
               mv build/app/outputs/flutter-apk/app-x86_64-${{ matrix.job.reltype }}.apk ../rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk
             ;;
             i686-linux-android)
@@ -287,7 +307,7 @@ jobs:
       - name: Verify signing key
         shell: bash
         run: |
-          APK=signed-apk/rustdesk-${{ env.VERSION }}-aarch64.apk
+          APK=signed-apk/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk
           KT=$(command -v keytool || echo /usr/lib/jvm/java-17-openjdk-amd64/bin/keytool)
           "$KT" -printcert -jarfile "$APK" | tee cert.txt
           grep -q "CN=PortalDesk" cert.txt || { echo "APK is not signed with the PortalDesk key"; exit 1; }
@@ -297,25 +317,25 @@ jobs:
         shell: bash
         run: |
           mkdir -p out
-          cp signed-apk/rustdesk-${{ env.VERSION }}-aarch64.apk out/PortalDesk-android.apk
-          echo "sha=$(sha256sum out/PortalDesk-android.apk | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+          cp signed-apk/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk out/PortalDesk-android${{ matrix.job.apk }}.apk
+          echo "sha=$(sha256sum out/PortalDesk-android${{ matrix.job.apk }}.apk | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
       - name: Upload apk
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: portal-android
-          path: out/PortalDesk-android.apk
+          name: portal-android${{ matrix.job.apk }}
+          path: out/PortalDesk-android${{ matrix.job.apk }}.apk
 
       - name: Publish Android release
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
         with:
-          tag_name: android-latest
-          name: PortalDesk Android (latest)
+          tag_name: ${{ matrix.job.tag }}
+          name: PortalDesk Android${{ matrix.job.apk }} (latest)
           body: |
             build ${{ github.run_number }}
             sha256 ${{ steps.pkg.outputs.sha }}
           prerelease: true
           make_latest: 'false'
-          files: out/PortalDesk-android.apk
+          files: out/PortalDesk-android${{ matrix.job.apk }}.apk
     permissions:
       contents: write
