@@ -52,6 +52,11 @@ class HomePageState extends State<HomePage> {
           if (mounted) checkForPortalUpdate(context);
         });
       });
+    } else if (isIOS) {
+      initPortalBuild();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) checkForPortalUpdate(context);
+      });
     }
   }
 

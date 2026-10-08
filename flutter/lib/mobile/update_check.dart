@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../common.dart';
@@ -14,7 +16,7 @@ const String _kBuild = String.fromEnvironment('PORTAL_BUILD');
 // 64-bit ARM phones use android-latest; 32-bit ARM and x86_64 have their own releases.
 final String _kAbi = abiSuffix(Platform.version);
 final String _kReleaseApi =
-    'https://api.github.com/repos/DENAYZE34/portal-remote/releases/tags/android$_kAbi-latest';
+    'https://api.github.com/repos/DENAYZE34/portal-remote/releases/tags/${isIOS ? 'ios' : 'android$_kAbi'}-latest';
 final String _kApkUrl =
     'https://github.com/DENAYZE34/portal-remote/releases/download/android$_kAbi-latest/PortalDesk-android$_kAbi.apk';
 
@@ -22,8 +24,21 @@ final String _kApkUrl =
 /// Settings tile shows it.
 final ValueNotifier<int?> portalLatestBuild = ValueNotifier<int?>(null);
 
-/// This build number (null in dev builds).
-int? get portalCurrentBuild => int.tryParse(_kBuild);
+int? _iosBuild;
+
+/// This build number: a build flag on Android, the app build number on iOS.
+int? get portalCurrentBuild => _iosBuild ?? int.tryParse(_kBuild);
+
+/// Call once at start; reads the iOS build number.
+Future<void> initPortalBuild() async {
+  if (!isIOS) return;
+  try {
+    _iosBuild = int.tryParse((await PackageInfo.fromPlatform()).buildNumber);
+  } catch (_) {}
+}
+
+const String _kIosSource =
+    'https://github.com/DENAYZE34/portal-remote/releases/download/ios-latest/apps.json';
 
 DateTime? _lastCheck;
 
@@ -53,10 +68,10 @@ Future<PortalUpdate?> _fetch(void Function() failed) async {
     final remote = parseReleaseBuild(text);
     final sha = parseReleaseSha(text);
     if (remote != null) portalLatestBuild.value = remote;
-    if (remote == null || sha == null || !isNewerBuild(remote, local)) {
+    if (remote == null || (!isIOS && sha == null) || !isNewerBuild(remote, local)) {
       return null;
     }
-    return PortalUpdate(remote, sha, parseReleaseNotes(text));
+    return PortalUpdate(remote, sha ?? '', parseReleaseNotes(text));
   } catch (_) {
     failed();
     return null;
@@ -67,7 +82,8 @@ Future<PortalUpdate?> _fetch(void Function() failed) async {
 /// at most every 6 hours; [manual] checks always run and always answer.
 Future<void> checkForPortalUpdate(BuildContext context,
     {bool manual = false}) async {
-  if (!isAndroid) return;
+  if (!(isAndroid || isIOS)) return;
+  await initPortalBuild();
   final local = portalCurrentBuild;
   if (local == null) {
     if (manual) showToast('Версия сборки неизвестна');
@@ -84,6 +100,40 @@ Future<void> checkForPortalUpdate(BuildContext context,
           ? 'Не удалось проверить обновления. Проверьте интернет.'
           : 'У вас последняя версия (сборка $local)');
     }
+    return;
+  }
+  if (isIOS) {
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Доступно обновление PortalDesk'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Новая сборка ${update.build} (у вас $local). '
+                'Откройте SideStore, вкладка «Мои приложения», PortalDesk, «Обновить». '
+                'Настройки, ID и пароль сохранятся.'),
+            if (update.notes.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              const Text('Что нового:',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
+              for (final n in update.notes) Text('• $n'),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () {
+                Clipboard.setData(const ClipboardData(text: _kIosSource));
+                showToast('Адрес источника SideStore скопирован');
+              },
+              child: const Text('Скопировать источник')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Понятно')),
+        ],
+      ),
+    );
     return;
   }
   final yes = await showDialog<bool>(

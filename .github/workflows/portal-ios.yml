@@ -137,11 +137,25 @@ jobs:
     - name: Write SideStore source
       shell: bash
       run: "SIZE=$(stat -f%z PortalDesk-unsigned.ipa)\nDATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)\ncat > apps.json <<EOF\n{\n  \"name\": \"PortalDesk\",\n  \"identifier\": \"com.portalremote.source\",\n  \"apps\": [{\n    \"name\": \"PortalDesk\",\n    \"bundleIdentifier\": \"com.portalremote.app\",\n    \"developerName\": \"PortalDesk\",\n    \"subtitle\": \"Remote desktop\",\n    \"localizedDescription\": \"PortalDesk remote desktop client\",\n    \"iconURL\": \"https://raw.githubusercontent.com/DENAYZE34/portal-remote/main/res/icon.png\",\n    \"version\": \"1.5.${{ github.run_number }}\",\n    \"versionDate\": \"$DATE\",\n    \"downloadURL\": \"https://github.com/DENAYZE34/portal-remote/releases/download/ios-latest/PortalDesk-unsigned.ipa\",\n    \"size\": $SIZE\n  }]\n}\nEOF\ncat apps.json"
+    - name: Release notes
+      id: notes
+      shell: bash
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        {
+          echo "text<<EOF"
+          gh api "repos/${{ github.repository }}/commits?per_page=5&sha=${{ github.sha }}" --jq '.[].commit.message | split("\n")[0] | "- " + .' || true
+          echo "EOF"
+        } >> "$GITHUB_OUTPUT"
     - name: Publish iOS release
       uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
       with:
         tag_name: ios-latest
         name: PortalDesk iOS (latest)
+        body: |
+          build ${{ github.run_number }}
+          ${{ steps.notes.outputs.text }}
         prerelease: true
         make_latest: 'false'
         files: 'PortalDesk-unsigned.ipa

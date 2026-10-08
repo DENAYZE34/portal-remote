@@ -790,7 +790,7 @@ class _SettingsState extends State<SettingsPage> with WidgetsBindingObserver {
                   setState(() {});
                 }
               }),
-          if (isAndroid)
+          if (isAndroid || isIOS)
             SettingsTile(
                 title: const Text('Проверить обновления'),
                 description: ValueListenableBuilder<int?>(
