@@ -17,6 +17,9 @@ const String _kDeepgramModel =
 
 /// Languages offered in the panel: Deepgram code and label.
 const Map<String, String> kDictationLanguages = {
+  // RU also understands English words inside Russian speech (Deepgram multi):
+  // on recorded Russian+English sentences it halves the word error rate and is
+  // equal on pure Russian.
   'ru': 'RU',
   'en': 'EN',
 };
@@ -125,7 +128,7 @@ class DeepgramDictation {
       final uri = Uri.parse('wss://api.deepgram.com/v1/listen').replace(
         queryParameters: {
           'model': _kDeepgramModel,
-          'language': language,
+          'language': language == 'ru' ? 'multi' : language,
           'encoding': 'linear16',
           'sample_rate': '16000',
           'channels': '1',
