@@ -143,7 +143,7 @@ jobs:
         uses: lukka/run-vcpkg@b1a0dd252f06b9e25b3c022a9a03bd7a427fb6a2 # v11
         with:
           vcpkgDirectory: /opt/artifacts/vcpkg
-          vcpkgGitCommitId: ${{ matrix.job.arch == 'armv7' && env.ARMV7_VCPKG_COMMIT_ID || env.VCPKG_COMMIT_ID }}
+          vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
           doNotCache: false
 
       - name: Prepare vcpkg binary cache dir
@@ -154,9 +154,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /opt/vcpkg-bincache
-          key: vcpkg-android-${{ matrix.job.target }}-${{ matrix.job.arch == 'armv7' && env.ARMV7_VCPKG_COMMIT_ID || env.VCPKG_COMMIT_ID }}-${{ hashFiles('vcpkg.json', 'flutter/build_android_deps.sh') }}
+          key: vcpkg-android-${{ matrix.job.target }}-${{ env.VCPKG_COMMIT_ID }}-${{ hashFiles('vcpkg.json', 'flutter/build_android_deps.sh') }}
           restore-keys: |
-            vcpkg-android-${{ matrix.job.target }}-${{ matrix.job.arch == 'armv7' && env.ARMV7_VCPKG_COMMIT_ID || env.VCPKG_COMMIT_ID }}-
+            vcpkg-android-${{ matrix.job.target }}-${{ env.VCPKG_COMMIT_ID }}-
 
       - name: Install vcpkg dependencies
         run: |
