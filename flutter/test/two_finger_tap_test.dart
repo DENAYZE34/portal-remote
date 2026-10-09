@@ -39,6 +39,24 @@ void main() {
     expect(d.up(3, 50), isFalse);
   });
 
+  test('a quick pinch or scroll is not a tap', () {
+    var d = TwoFingerTapDetector();
+    d.down(1, const Offset(100, 100), 0);
+    d.down(2, const Offset(200, 100), 5);
+    d.move(1, const Offset(105, 100));
+    d.move(2, const Offset(195, 100));
+    d.up(1, 80);
+    expect(d.up(2, 90), isFalse);
+
+    d = TwoFingerTapDetector();
+    d.down(1, const Offset(100, 100), 0);
+    d.down(2, const Offset(200, 100), 5);
+    d.move(1, const Offset(100, 107));
+    d.move(2, const Offset(200, 107));
+    d.up(1, 80);
+    expect(d.up(2, 90), isTrue);
+  });
+
   testWidgets('region fires on a real two-finger tap and not on one finger',
       (tester) async {
     var taps = 0;

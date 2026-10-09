@@ -155,11 +155,22 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
         _presetApplied = true;
         _applyPreset('max');
         // Once real delay numbers exist, lower the start profile on a slow link.
-        _smartProfileTimer = Timer(const Duration(seconds: 8), () {
-          if (!mounted || _presetChosenByUser) return;
+        var tries = 0;
+        _smartProfileTimer =
+            Timer.periodic(const Duration(seconds: 6), (t) async {
+          tries++;
+          if (!mounted || _presetChosenByUser || tries > 3) {
+            t.cancel();
+            return;
+          }
+          final delay = parseDelayMs(gFFI.qualityMonitorModel.data.delay);
+          if (delay == null) return;
+          t.cancel();
+          // The owner changed quality elsewhere (display menu): leave it.
+          final now = await bind.sessionGetImageQuality(sessionId: sessionId);
+          if (!mounted || presetFromSession(now) != _quality) return;
           final want = smartStartPreset(
-              direct: gFFI.ffiModel.direct ?? false,
-              delayMs: parseDelayMs(gFFI.qualityMonitorModel.data.delay));
+              direct: gFFI.ffiModel.direct ?? false, delayMs: delay);
           if (want != _quality) _applyPreset(want);
         });
       }

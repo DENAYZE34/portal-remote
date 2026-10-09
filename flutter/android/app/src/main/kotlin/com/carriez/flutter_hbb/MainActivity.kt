@@ -402,6 +402,20 @@ class MainActivity : FlutterActivity() {
                         "notifications" to androidx.core.app.NotificationManagerCompat.from(this).areNotificationsEnabled()
                     ))
                 }
+                "open_overlay_settings" -> {
+                    var ok = false
+                    try {
+                        startActivity(Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:" + packageName)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        ok = true
+                    } catch (e: Exception) {
+                        try {
+                            startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:" + packageName)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                            ok = true
+                        } catch (e2: Exception) {
+                        }
+                    }
+                    result.success(ok)
+                }
                 "open_battery_settings" -> {
                     try {
                         startActivity(Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))

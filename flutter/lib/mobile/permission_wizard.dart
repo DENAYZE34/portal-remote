@@ -45,14 +45,21 @@ class _PermissionWizardPageState extends State<PermissionWizardPage>
   }
 
   Future<void> _fix(String key) async {
+    try {
+      await _open(key);
+    } catch (_) {
+      showToast('Не удалось открыть настройки');
+    }
+  }
+
+  Future<void> _open(String key) async {
     switch (key) {
       case 'accessibility':
         await gFFI.invokeMethod(
             AndroidChannel.kStartAction, kActionAccessibilitySettings);
         break;
       case 'overlay':
-        await gFFI.invokeMethod(AndroidChannel.kStartAction,
-            'android.settings.action.MANAGE_OVERLAY_PERMISSION');
+        await gFFI.invokeMethod('open_overlay_settings');
         break;
       case 'battery':
         await gFFI.invokeMethod('open_battery_settings');

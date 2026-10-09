@@ -1,12 +1,14 @@
 import 'package:flutter/widgets.dart';
 
 const int kTwoFingerTapMaxMs = 300;
-const double kTwoFingerTapSlop = 18;
+const double kTwoFingerTapSlop = 8;
 
 /// Recognises a quick two-finger tap (both fingers down together, barely
 /// moving, both up fast). Pure logic, fed with pointer events.
 class TwoFingerTapDetector {
   final Map<int, Offset> _start = {};
+  final Map<int, Offset> _now = {};
+  double _startGap = 0;
   int _firstDownMs = 0;
   bool _broken = false;
   bool _hadTwo = false;
@@ -18,18 +20,29 @@ class TwoFingerTapDetector {
       _hadTwo = false;
     }
     _start[pointer] = pos;
-    if (_start.length == 2) _hadTwo = true;
+    _now[pointer] = pos;
+    if (_start.length == 2) {
+      _hadTwo = true;
+      _startGap = (_now.values.first - _now.values.last).distance;
+    }
     if (_start.length > 2) _broken = true;
   }
 
   void move(int pointer, Offset pos) {
     final s = _start[pointer];
-    if (s != null && (pos - s).distance > kTwoFingerTapSlop) _broken = true;
+    if (s == null) return;
+    _now[pointer] = pos;
+    if ((pos - s).distance > kTwoFingerTapSlop) _broken = true;
+    if (_hadTwo && _now.length == 2) {
+      final gap = (_now.values.first - _now.values.last).distance;
+      if ((gap - _startGap).abs() > kTwoFingerTapSlop) _broken = true;
+    }
   }
 
   /// Returns true when this release completes a two-finger tap.
   bool up(int pointer, int timeMs) {
     _start.remove(pointer);
+    _now.remove(pointer);
     if (_start.isNotEmpty) return false;
     final ok =
         _hadTwo && !_broken && timeMs - _firstDownMs <= kTwoFingerTapMaxMs;
@@ -40,6 +53,7 @@ class TwoFingerTapDetector {
 
   void cancel() {
     _start.clear();
+    _now.clear();
     _broken = false;
     _hadTwo = false;
   }
