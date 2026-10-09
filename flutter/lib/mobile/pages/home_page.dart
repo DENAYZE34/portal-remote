@@ -8,6 +8,7 @@ import '../../common/widgets/chat_page.dart';
 import '../../models/platform_model.dart';
 import '../../models/state_model.dart';
 import 'connection_page.dart';
+import '../host_resume.dart';
 import '../stability.dart';
 import '../wizard.dart';
 import '../update_check.dart';
@@ -50,6 +51,7 @@ class HomePageState extends State<HomePage> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         showFirstRunWizardOnce(context)
+            .then((_) => resumeHostIfNeeded())
             .then((_) => showStabilitySetupOnce(context))
             .then((_) {
           if (mounted) checkForPortalUpdate(context);

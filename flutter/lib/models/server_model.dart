@@ -396,6 +396,8 @@ class ServerModel with ChangeNotifier {
         );
       });
       if (res == true) {
+        // Only the owner's own stop clears the resume-after-restart flag.
+        bind.mainSetLocalOption(key: 'portal-host-on', value: 'N');
         stopService();
       }
     } else {
@@ -432,6 +434,7 @@ class ServerModel with ChangeNotifier {
   Future<void> startService() async {
     _isStart = true;
     notifyListeners();
+    bind.mainSetLocalOption(key: 'portal-host-on', value: 'Y');
     parent.target?.ffiModel.updateEventListener(parent.target!.sessionId, "");
     await parent.target?.invokeMethod("init_service");
     // ugly is here, because for desktop, below is useless
