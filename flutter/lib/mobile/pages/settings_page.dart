@@ -23,6 +23,8 @@ import 'package:flutter/services.dart';
 import '../crash_log.dart';
 import '../update_check.dart';
 import '../permission_wizard.dart';
+import '../glass/glass.dart';
+import '../neon_theme.dart';
 import '../wizard.dart';
 import '../widgets/zoom_widgets.dart';
 import '../zoom_logic.dart';
@@ -743,6 +745,8 @@ class _SettingsState extends State<SettingsPage> with WidgetsBindingObserver {
     final hideSecuritySettings =
         bind.mainGetBuildinOption(key: kOptionHideSecuritySetting) == 'Y';
     final settings = SettingsList(
+      platform: kNeon ? DevicePlatform.iOS : null,
+      contentPadding: kNeon ? const EdgeInsets.only(bottom: 110) : null,
       sections: _visibleSections([
         SettingsSection(title: const Text('Основное'), tiles: [
           SettingsTile(
@@ -1174,6 +1178,17 @@ class _SettingsState extends State<SettingsPage> with WidgetsBindingObserver {
           ],
         ),
       ]),
+      darkTheme: kNeon
+          ? const SettingsThemeData(
+              settingsListBackground: Colors.transparent,
+              settingsSectionBackground: Color(0x1AFFFFFF),
+              dividerColor: Color(0x1FFFFFFF),
+              titleTextColor: Glass.soft,
+              settingsTileTextColor: Glass.text,
+              tileDescriptionTextColor: Glass.soft,
+              leadingIconsColor: Colors.white,
+            )
+          : null,
     );
     return settings;
   }

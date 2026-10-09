@@ -39,16 +39,21 @@ class AuroraBackground extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                    colors: [c.withOpacity(o), c.withOpacity(0)]),
+                    colors: [
+                      c.withOpacity(o),
+                      c.withOpacity(o * 0.3),
+                      c.withOpacity(0)
+                    ],
+                    stops: const [0, 0.45, 1]),
               ),
             ),
           ),
         );
     return Stack(children: [
       const Positioned.fill(child: ColoredBox(color: Glass.base)),
-      blob(const Alignment(-0.9, -0.85), Glass.violet, 0.62, 640),
-      blob(const Alignment(1.0, -0.15), Glass.cyan, 0.38, 560),
-      blob(const Alignment(-0.4, 0.95), Glass.violet, 0.4, 680),
+      blob(const Alignment(-0.9, -0.85), Glass.violet, 0.5, 700),
+      blob(const Alignment(1.1, -0.2), Glass.cyan, 0.26, 620),
+      blob(const Alignment(-0.5, 1.0), Glass.violet, 0.34, 720),
       Positioned.fill(child: child),
     ]);
   }
