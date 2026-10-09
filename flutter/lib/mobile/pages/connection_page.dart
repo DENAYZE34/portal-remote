@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:auto_size_text_field/auto_size_text_field.dart';
 import 'package:flutter/material.dart';
+import '../glass/glass.dart';
 import '../neon_theme.dart';
 import 'package:flutter_hbb/common/formatter/id_formatter.dart';
 import 'package:flutter_hbb/common/widgets/connection_page_title.dart';
@@ -87,6 +88,7 @@ class _ConnectionPageState extends State<ConnectionPage> {
             delegate: SliverChildListDelegate([
           if (!bind.isCustomClient() && !isIOS)
             Obx(() => _buildUpdateUI(stateGlobal.updateUrl.value)),
+          if (kNeon) const _LastDeviceHero(),
           _buildRemoteIDTextField(),
         ])),
         SliverFillRemaining(
@@ -156,11 +158,9 @@ class _ConnectionPageState extends State<ConnectionPage> {
         child: Ink(
           decoration: kNeon
               ? BoxDecoration(
-                  color: Neon.surface,
-                  borderRadius: BorderRadius.circular(20),
-                  border:
-                      Border.all(color: Neon.violet.withOpacity(0.8), width: 1.2),
-                  boxShadow: Neon.glow(0.5),
+                  color: Glass.fill(0.08),
+                  borderRadius: BorderRadius.circular(Glass.rPill),
+                  border: Border.all(color: Glass.edge(), width: 1),
                 )
               : BoxDecoration(
                   color: Theme.of(context).cardColor,
@@ -383,5 +383,79 @@ class _ConnectionPageState extends State<ConnectionPage> {
       Get.delete<TextEditingController>();
     }
     super.dispose();
+  }
+}
+
+/// The big "connect to the last device" card of the glass design.
+class _LastDeviceHero extends StatefulWidget {
+  const _LastDeviceHero();
+
+  @override
+  State<_LastDeviceHero> createState() => _LastDeviceHeroState();
+}
+
+class _LastDeviceHeroState extends State<_LastDeviceHero> {
+  void _changed() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    gFFI.recentPeersModel.addListener(_changed);
+  }
+
+  @override
+  void dispose() {
+    gFFI.recentPeersModel.removeListener(_changed);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final peers = gFFI.recentPeersModel.peers;
+    final p = peers.isEmpty ? null : peers.first;
+    final title = p == null
+        ? 'Подключитесь к ПК'
+        : (p.alias.isNotEmpty
+            ? p.alias
+            : (p.hostname.isNotEmpty ? p.hostname : p.id));
+    final sub = p == null
+        ? 'Введите ID ниже или установите PortalDesk на компьютер'
+        : '${p.id}${p.platform.isEmpty ? '' : ' · ${p.platform}'}';
+    return GlassCard(
+      margin: const EdgeInsets.fromLTRB(2, 8, 2, 10),
+      padding: const EdgeInsets.all(22),
+      radius: 32,
+      strength: 1.2,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          StatusDot(
+              color: (p?.online ?? false) ? Glass.ok : Glass.muted,
+              glow: p?.online ?? false),
+          const SizedBox(width: 8),
+          Text(
+              p == null
+                  ? 'пока нет устройств'
+                  : (p.online ? 'в сети' : 'последнее подключение'),
+              style: const TextStyle(color: Glass.soft, fontSize: 13)),
+        ]),
+        const SizedBox(height: 12),
+        Text(title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+                color: Glass.text, fontSize: 26, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 2),
+        Text(sub, style: const TextStyle(color: Glass.soft, fontSize: 13)),
+        if (p != null) ...[
+          const SizedBox(height: 18),
+          GlassButton(
+              label: 'Подключиться',
+              icon: Icons.arrow_outward_rounded,
+              onPressed: () => connect(context, p.id)),
+        ],
+      ]),
+    );
   }
 }

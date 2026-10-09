@@ -30,6 +30,8 @@ import '../widgets/voice_toggle.dart';
 import '../widgets/zoom_widgets.dart';
 import '../zoom_logic.dart';
 import '../quality_preset.dart';
+import '../glass/glass.dart';
+import '../neon_theme.dart';
 import '../two_finger_tap.dart';
 
 final initText = '1' * 1024;
@@ -517,7 +519,15 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
   Widget _bottomWidget() => _showGestureHelp
       ? getGestureHelp()
       : (_showBar && gFFI.ffiModel.pi.displays.isNotEmpty
-          ? getBottomAppBar()
+          ? (kNeon
+              ? Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                  child: GlassCard(
+                      radius: Glass.rPill,
+                      padding: EdgeInsets.zero,
+                      strength: 1.25,
+                      child: getBottomAppBar()))
+              : getBottomAppBar())
           : Offstage());
 
   @override
@@ -638,8 +648,8 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
   Widget getBottomAppBar() {
     final ffiModel = Provider.of<FfiModel>(context);
     return BottomAppBar(
-      elevation: 10,
-      color: MyTheme.accent,
+      elevation: kNeon ? 0 : 10,
+      color: kNeon ? Colors.transparent : MyTheme.accent,
       child: Row(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

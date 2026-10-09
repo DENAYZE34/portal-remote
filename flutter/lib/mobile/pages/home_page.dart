@@ -9,6 +9,7 @@ import '../../models/platform_model.dart';
 import '../../models/state_model.dart';
 import 'connection_page.dart';
 import '../host_resume.dart';
+import '../glass/glass.dart';
 import '../neon_theme.dart';
 import '../stability.dart';
 import '../wizard.dart';
@@ -99,14 +100,16 @@ class HomePageState extends State<HomePage> {
           }
           return false;
         },
-        child: Scaffold(
-          // backgroundColor: MyTheme.grayBg,
+        child: _glassWrap(Scaffold(
+          backgroundColor: kNeon ? Colors.transparent : null,
+          extendBody: kNeon,
           appBar: AppBar(
             centerTitle: true,
+            backgroundColor: kNeon ? Colors.transparent : null,
             title: appTitle(),
             actions: _pages.elementAt(_selectedIndex).appBarActions,
           ),
-          bottomNavigationBar: BottomNavigationBar(
+          bottomNavigationBar: kNeon ? _glassNav() : BottomNavigationBar(
             key: navigationBarKey,
             items: _pages
                 .map((page) =>
@@ -130,8 +133,41 @@ class HomePageState extends State<HomePage> {
             }),
           ),
           body: _pages.elementAt(_selectedIndex),
-        ));
+        )));
   }
+
+  Widget _glassWrap(Widget scaffold) =>
+      kNeon ? AuroraBackground(child: scaffold) : scaffold;
+
+  GlassNavItem _navItemFor(PageShape page) {
+    if (page is ConnectionPage) {
+      return const GlassNavItem('Устройства', Icons.devices_rounded);
+    }
+    if (page is ServerPage) {
+      return const GlassNavItem('Телефон', Icons.screen_share_rounded);
+    }
+    if (page is SettingsPage) {
+      return const GlassNavItem('Настройки', Icons.tune_rounded);
+    }
+    return const GlassNavItem('Чат', Icons.chat_bubble_rounded);
+  }
+
+  Widget _glassNav() => GlassNavBar(
+        key: navigationBarKey,
+        items: _pages.map(_navItemFor).toList(),
+        index: _selectedIndex,
+        onChanged: (index) => setState(() {
+          if (_selectedIndex != index) {
+            _selectedIndex = index;
+            if (isChatPageCurrentTab) {
+              gFFI.chatModel.hideChatIconOverlay();
+              gFFI.chatModel.hideChatWindowOverlay();
+              gFFI.chatModel
+                  .mobileClearClientUnread(gFFI.chatModel.currentKey.connId);
+            }
+          }
+        }),
+      );
 
   Widget appTitle() {
     final currentUser = gFFI.chatModel.currentUser;
