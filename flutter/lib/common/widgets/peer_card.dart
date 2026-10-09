@@ -1,4 +1,6 @@
 import 'package:bot_toast/bot_toast.dart';
+import '../../mobile/glass/glass.dart';
+import '../../mobile/neon_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hbb/common/widgets/dialog.dart';
@@ -82,6 +84,24 @@ class _PeerCardState extends State<_PeerCard>
 
   Widget _buildPortrait() {
     final peer = super.widget.peer;
+    if (kNeon) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+        decoration: BoxDecoration(
+          color: Glass.fill(0.08),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: Glass.edge(), width: 1),
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: gestureDetector(
+            child: Container(
+                padding: const EdgeInsets.only(left: 12, top: 8, bottom: 8),
+                child: _buildPeerTile(context, peer, null)),
+          ),
+        ),
+      );
+    }
     return Card(
         margin: EdgeInsets.symmetric(horizontal: 2),
         child: gestureDetector(
