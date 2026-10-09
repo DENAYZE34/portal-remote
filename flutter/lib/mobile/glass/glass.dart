@@ -30,33 +30,37 @@ class AuroraBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget blob(Alignment a, Color c, double o, double size) => Align(
-          alignment: a,
-          child: IgnorePointer(
-            child: Container(
-              width: size,
-              height: size,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                    colors: [
-                      c.withOpacity(o),
-                      c.withOpacity(o * 0.3),
-                      c.withOpacity(0)
-                    ],
-                    stops: const [0, 0.45, 1]),
-              ),
-            ),
-          ),
-        );
     return Stack(children: [
-      const Positioned.fill(child: ColoredBox(color: Glass.base)),
-      blob(const Alignment(-1.25, -1.15), Glass.violet, 0.6, 760),
-      blob(const Alignment(1.3, -0.7), Glass.cyan, 0.34, 640),
-      blob(const Alignment(1.1, 1.2), Glass.violet, 0.4, 760),
+      const Positioned.fill(
+          child: IgnorePointer(child: CustomPaint(painter: _AuroraPainter()))),
       Positioned.fill(child: child),
     ]);
   }
+}
+
+class _AuroraPainter extends CustomPainter {
+  const _AuroraPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(Offset.zero & size, Paint()..color = Glass.base);
+    void spot(double fx, double fy, double rw, Color c, double o) {
+      final center = Offset(size.width * fx, size.height * fy);
+      final r = size.width * rw;
+      final shader = RadialGradient(
+        colors: [c.withOpacity(o), c.withOpacity(o * 0.3), c.withOpacity(0)],
+        stops: const [0, 0.5, 1],
+      ).createShader(Rect.fromCircle(center: center, radius: r));
+      canvas.drawCircle(center, r, Paint()..shader = shader);
+    }
+
+    spot(0.0, 0.0, 0.95, Glass.violet, 0.55);
+    spot(1.0, 0.2, 0.75, Glass.cyan, 0.3);
+    spot(0.85, 1.0, 0.95, Glass.violet, 0.42);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 /// A frosted panel.
