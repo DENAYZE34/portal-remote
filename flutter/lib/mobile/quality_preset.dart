@@ -46,3 +46,17 @@ IconData qualityPresetIcon(String preset) {
       return Icons.rocket_launch;
   }
 }
+
+/// Parses the delay text of the quality monitor ("37"), null when unknown.
+int? parseDelayMs(String? text) => int.tryParse((text ?? '').trim());
+
+/// Picks the starting preset from what the link looks like. Direct links and
+/// a relay with a short delay get the top profile; slow links start lower so
+/// the picture stays smooth, and the owner's own choice always wins.
+String smartStartPreset({required bool direct, int? delayMs}) {
+  if (delayMs == null || delayMs <= 0) return 'max';
+  if (direct) return delayMs > 200 ? 'best' : 'max';
+  if (delayMs <= 90) return 'max';
+  if (delayMs <= 160) return 'best';
+  return 'balanced';
+}

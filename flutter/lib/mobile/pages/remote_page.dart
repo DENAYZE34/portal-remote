@@ -30,6 +30,7 @@ import '../widgets/voice_toggle.dart';
 import '../widgets/zoom_widgets.dart';
 import '../zoom_logic.dart';
 import '../quality_preset.dart';
+import '../two_finger_tap.dart';
 
 final initText = '1' * 1024;
 
@@ -71,6 +72,8 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
   String _quality = 'max';
   Worker? _firstImageWorker;
   bool _presetApplied = false;
+  bool _presetChosenByUser = false;
+  Timer? _smartProfileTimer;
 
   Future<void> _applyPreset(String preset) async {
     if (preset == 'max') {
@@ -97,6 +100,7 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
   Future<void> _cyclePreset() async {
     final current = await bind.sessionGetImageQuality(sessionId: sessionId);
     final next = nextQualityPreset(current);
+    _presetChosenByUser = true;
     await _applyPreset(next);
     showToast(qualityPresetLabel(next));
   }
@@ -150,6 +154,14 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
       if (!waiting && !_presetApplied) {
         _presetApplied = true;
         _applyPreset('max');
+        // Once real delay numbers exist, lower the start profile on a slow link.
+        _smartProfileTimer = Timer(const Duration(seconds: 8), () {
+          if (!mounted || _presetChosenByUser) return;
+          final want = smartStartPreset(
+              direct: gFFI.ffiModel.direct ?? false,
+              delayMs: parseDelayMs(gFFI.qualityMonitorModel.data.delay));
+          if (want != _quality) _applyPreset(want);
+        });
       }
     });
     _physicalFocusNode.requestFocus();
@@ -198,6 +210,7 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
     // pop; the `sessionClose` in `gFFI.close()` becomes a no-op once removed.
     unawaited(bind.sessionClose(sessionId: sessionId));
     setSessionKeepAlive(false);
+    _smartProfileTimer?.cancel();
     _firstImageWorker?.dispose();
     // https://github.com/flutter/flutter/issues/64935
     super.dispose();
@@ -576,9 +589,13 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
                                 color: MyTheme.canvasColor,
                                 child: inputModel.isPhysicalMouse.value
                                     ? getBodyForMobile()
-                                    : RawTouchGestureDetectorRegion(
-                                        child: getBodyForMobile(),
-                                        ffi: gFFI,
+                                    : TwoFingerTapRegion(
+                                        onTap: () =>
+                                            inputModel.tap(MouseButtons.right),
+                                        child: RawTouchGestureDetectorRegion(
+                                          child: getBodyForMobile(),
+                                          ffi: gFFI,
+                                        ),
                                       ),
                               );
                             }),
