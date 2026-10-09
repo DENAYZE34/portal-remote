@@ -9,6 +9,7 @@ import '../../models/platform_model.dart';
 import '../../models/state_model.dart';
 import 'connection_page.dart';
 import '../host_resume.dart';
+import '../neon_theme.dart';
 import '../stability.dart';
 import '../wizard.dart';
 import '../update_check.dart';
@@ -113,8 +114,8 @@ class HomePageState extends State<HomePage> {
                 .toList(),
             currentIndex: _selectedIndex,
             type: BottomNavigationBarType.fixed,
-            selectedItemColor: MyTheme.accent, //
-            unselectedItemColor: MyTheme.darkGray,
+            selectedItemColor: kNeon ? Neon.cyan : MyTheme.accent,
+            unselectedItemColor: kNeon ? Neon.muted : MyTheme.darkGray,
             onTap: (index) => setState(() {
               // close chat overlay when go chat page
               if (_selectedIndex != index) {
