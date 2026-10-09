@@ -129,6 +129,11 @@ Future<void> initEnv(String appType) async {
   if (bind.mainGetLocalOption(key: kCommConfKeyLang).isEmpty) {
     await bind.mainSetLocalOption(key: kCommConfKeyLang, value: 'ru');
   }
+  // The phone app is dark (night-navy and neon) unless the owner picks otherwise.
+  if ((isAndroid || isIOS) &&
+      bind.mainGetLocalOption(key: kCommConfKeyTheme).isEmpty) {
+    await bind.mainSetLocalOption(key: kCommConfKeyTheme, value: 'dark');
+  }
   // await Firebase.initializeApp();
   _registerEventHandler();
   // Update the system theme.

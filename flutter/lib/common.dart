@@ -7,6 +7,7 @@ import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'mobile/neon_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hbb/common/formatter/id_formatter.dart';
 import 'package:flutter_hbb/desktop/widgets/refresh_wrapper.dart';
@@ -472,10 +473,20 @@ class MyTheme {
     useMaterial3: false,
     brightness: Brightness.dark,
     hoverColor: Color.fromARGB(255, 45, 46, 53),
-    scaffoldBackgroundColor: Color(0xFF18191E),
-    dialogBackgroundColor: Color(0xFF18191E),
+    scaffoldBackgroundColor: kNeon ? Neon.bg : Color(0xFF18191E),
+    dialogBackgroundColor: kNeon ? Neon.surface : Color(0xFF18191E),
     appBarTheme: AppBarTheme(
       shadowColor: Colors.transparent,
+      backgroundColor: kNeon ? Neon.bar : null,
+      elevation: kNeon ? 0 : null,
+      centerTitle: kNeon ? true : null,
+      titleTextStyle: kNeon
+          ? const TextStyle(
+              color: Neon.text,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.4)
+          : null,
     ),
     dialogTheme: DialogTheme(
       elevation: 15,
@@ -483,7 +494,7 @@ class MyTheme {
         borderRadius: BorderRadius.circular(18.0),
         side: BorderSide(
           width: 1,
-          color: Color(0xFF24252B),
+          color: kNeon ? Neon.line : Color(0xFF24252B),
         ),
       ),
     ),
@@ -509,12 +520,21 @@ class MyTheme {
         color: accent80,
       ),
     ),
-    cardColor: Color(0xFF24252B),
+    cardColor: kNeon ? Neon.surface : Color(0xFF24252B),
     visualDensity: VisualDensity.adaptivePlatformDensity,
     tabBarTheme: const TabBarTheme(
       labelColor: Colors.white70,
     ),
     tooltipTheme: tooltipTheme(),
+    bottomNavigationBarTheme: kNeon
+        ? const BottomNavigationBarThemeData(
+            backgroundColor: Neon.bar,
+            selectedItemColor: Neon.cyan,
+            unselectedItemColor: Neon.muted,
+            type: BottomNavigationBarType.fixed,
+            showUnselectedLabels: true,
+          )
+        : null,
     splashColor: (isDesktop || isWebDesktop) ? Colors.transparent : null,
     highlightColor: (isDesktop || isWebDesktop) ? Colors.transparent : null,
     splashFactory: (isDesktop || isWebDesktop) ? NoSplash.splashFactory : null,
@@ -532,7 +552,7 @@ class MyTheme {
         : mobileTextButtonTheme,
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: MyTheme.accent,
+        backgroundColor: kNeon ? Neon.violet : MyTheme.accent,
         foregroundColor: Colors.white,
         disabledForegroundColor: Colors.white70,
         disabledBackgroundColor: Colors.white10,
@@ -560,9 +580,9 @@ class MyTheme {
         style: MenuStyle(
             backgroundColor: MaterialStatePropertyAll(Color(0xFF121212)))),
     colorScheme: ColorScheme.dark(
-      primary: Colors.blue,
-      secondary: accent,
-      background: Color(0xFF24252B),
+      primary: kNeon ? Neon.cyan : Colors.blue,
+      secondary: kNeon ? Neon.violet : accent,
+      background: kNeon ? Neon.surface : Color(0xFF24252B),
     ),
     popupMenuTheme: PopupMenuThemeData(
         shape: RoundedRectangleBorder(

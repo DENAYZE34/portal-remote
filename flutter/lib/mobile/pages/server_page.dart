@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../neon_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hbb/desktop/pages/desktop_home_page.dart';
 import 'package:flutter_hbb/mobile/widgets/dialog.dart';
@@ -829,6 +830,14 @@ class PaddingCard extends StatelessWidget {
                   )
                 ],
               )));
+    }
+    if (kNeon) {
+      return Padding(
+          padding: const EdgeInsets.fromLTRB(12.0, 10.0, 12.0, 0),
+          child: NeonPanel(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+              child: Column(children: children)));
     }
     return SizedBox(
         width: double.maxFinite,

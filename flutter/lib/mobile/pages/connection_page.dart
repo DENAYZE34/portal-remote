@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:auto_size_text_field/auto_size_text_field.dart';
 import 'package:flutter/material.dart';
+import '../neon_theme.dart';
 import 'package:flutter_hbb/common/formatter/id_formatter.dart';
 import 'package:flutter_hbb/common/widgets/connection_page_title.dart';
 import 'package:flutter_hbb/models/state_model.dart';
@@ -153,10 +154,18 @@ class _ConnectionPageState extends State<ConnectionPage> {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
         child: Ink(
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.all(Radius.circular(13)),
-          ),
+          decoration: kNeon
+              ? BoxDecoration(
+                  color: Neon.surface,
+                  borderRadius: BorderRadius.circular(20),
+                  border:
+                      Border.all(color: Neon.violet.withOpacity(0.8), width: 1.2),
+                  boxShadow: Neon.glow(0.5),
+                )
+              : BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.all(Radius.circular(13)),
+                ),
           child: Row(
             children: <Widget>[
               Expanded(
@@ -234,7 +243,7 @@ class _ConnectionPageState extends State<ConnectionPage> {
                           fontFamily: 'WorkSans',
                           fontWeight: FontWeight.bold,
                           fontSize: 30,
-                          color: MyTheme.idColor,
+                          color: kNeon ? Neon.text : MyTheme.idColor,
                         ),
                         decoration: InputDecoration(
                           labelText: translate('Remote ID'),
@@ -338,8 +347,8 @@ class _ConnectionPageState extends State<ConnectionPage> {
                 width: 60,
                 height: 60,
                 child: IconButton(
-                  icon: const Icon(Icons.arrow_forward,
-                      color: MyTheme.darkGray, size: 45),
+                  icon: Icon(Icons.arrow_forward,
+                      color: kNeon ? Neon.cyan : MyTheme.darkGray, size: 45),
                   onPressed: onConnect,
                 ),
               ),
