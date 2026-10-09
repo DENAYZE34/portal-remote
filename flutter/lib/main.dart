@@ -125,6 +125,10 @@ Future<void> initEnv(String appType) async {
   // for convenience, use global FFI on mobile platform
   // focus on multi-ffi on desktop first
   await initGlobalFFI();
+  // PortalDesk speaks Russian by default; the owner can still pick another language.
+  if (bind.mainGetLocalOption(key: kCommConfKeyLang).isEmpty) {
+    await bind.mainSetLocalOption(key: kCommConfKeyLang, value: 'ru');
+  }
   // await Firebase.initializeApp();
   _registerEventHandler();
   // Update the system theme.
