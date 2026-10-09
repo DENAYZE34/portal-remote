@@ -18,4 +18,5 @@ grep -q 'applicationId "com.portalremote.app"' flutter/android/app/build.gradle 
 grep -n 'admin.rustdesk.com".to_owned' src/common.rs && { echo "RustDesk API fallback present"; fail=1; }
 grep -n 'api.rustdesk.com/version' libs/hbb_common/src/lib.rs && { echo "RustDesk version-check URL present"; fail=1; }
 grep -rnE "[\"']https://(www[.])?rustdesk[.]com/docs|[\"']https://github[.]com/rustdesk/rustdesk/issues" flutter/lib src/client.rs libs/hbb_common/src/config.rs && { echo "RustDesk links in app"; fail=1; }
+grep -q 'const UPDATE_OWNER: &str = "DENAYZE34";' src/updater.rs && grep -q 'const UPDATE_REPO: &str = "portal-remote";' src/updater.rs || { echo "updater trusts a repository other than ours"; fail=1; }
 exit $fail

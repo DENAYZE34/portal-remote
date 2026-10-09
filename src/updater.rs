@@ -251,6 +251,7 @@ fn check_update(manually: bool) -> ResultType<()> {
                 );
             }
             let file_data = response.bytes()?;
+            verify_update_digest(&file_path, &file_data)?;
             let mut file = std::fs::File::create(&file_path)?;
             file.write_all(&file_data)?;
         }
@@ -353,6 +354,40 @@ fn update_new_version(update_msi: bool, version: &str, file_path: &PathBuf) {
     }
 }
 
+/// The only GitHub repository updates are downloaded from.
+const UPDATE_OWNER: &str = "DENAYZE34";
+const UPDATE_REPO: &str = "portal-remote";
+
+/// Checks [data] against the digest GitHub lists for the asset. A missing digest
+/// only logs a warning (TLS to github.com still protects the download); a
+/// wrong one aborts the update.
+fn verify_update_digest(file_path: &Path, data: &[u8]) -> ResultType<()> {
+    use hbb_common::sodiumoxide::crypto::hash::sha256;
+    let name = file_path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or_default()
+        .to_owned();
+    let expected = crate::common::SOFTWARE_UPDATE_DIGESTS
+        .lock()
+        .unwrap()
+        .get(&name)
+        .cloned();
+    let Some(expected) = expected else {
+        log::warn!("No published digest for {}, skipping the hash check", name);
+        return Ok(());
+    };
+    let actual: String = sha256::hash(data)
+        .0
+        .iter()
+        .map(|b| format!("{:02x}", b))
+        .collect();
+    if actual != expected.trim_start_matches("sha256:").to_lowercase() {
+        bail!("Update file {} does not match its published SHA-256", name);
+    }
+    Ok(())
+}
+
 pub fn get_update_download_file_from_url(url: &str) -> Option<PathBuf> {
     let parsed = url::Url::parse(url).ok()?;
     // Check the raw prefix before Url normalizes default ports.
@@ -376,8 +411,8 @@ pub fn get_update_download_file_from_url(url: &str) -> Option<PathBuf> {
     let tag = segments.next()?;
     let filename = segments.next()?;
 
-    if owner != "rustdesk"
-        || repo != "rustdesk"
+    if owner != UPDATE_OWNER
+        || repo != UPDATE_REPO
         || releases != "releases"
         || download != "download"
         || tag.is_empty()
@@ -662,7 +697,7 @@ mod tests {
     #[test]
     fn update_download_file_accepts_expected_github_asset_urls() {
         let file = get_download_file_from_url(
-            "https://github.com/rustdesk/rustdesk/releases/download/1.4.0/rustdesk-1.4.0-x86_64.dmg",
+            "https://github.com/DENAYZE34/portal-remote/releases/download/1.4.0/rustdesk-1.4.0-x86_64.dmg",
         )
         .expect("valid GitHub release asset URL");
 
@@ -675,16 +710,17 @@ mod tests {
     #[test]
     fn update_download_file_rejects_untrusted_or_malformed_urls() {
         for url in [
-            "http://github.com/rustdesk/rustdesk/releases/download/1/rustdesk.exe",
+            "http://github.com/DENAYZE34/portal-remote/releases/download/1/rustdesk.exe",
             "https://example.com/rustdesk.exe",
             "https://github.com/other/project/releases/download/1/rustdesk.exe",
-            "https://github.com/rustdesk/rustdesk/releases/download/1/",
-            "https://github.com/rustdesk/rustdesk/releases/download/1/nested/rustdesk.exe",
-            "https://github.com/rustdesk/rustdesk/releases/download/1/C:rustdesk.exe",
-            "https://user@github.com/rustdesk/rustdesk/releases/download/1/rustdesk.exe",
-            "https://github.com:443/rustdesk/rustdesk/releases/download/1/rustdesk.exe",
-            "https://github.com/rustdesk/rustdesk/releases/download/1/rustdesk.exe?download=1",
-            "https://github.com/rustdesk/rustdesk/releases/download/1/rustdesk.exe#download",
+            "https://github.com/rustdesk/rustdesk/releases/download/1/rustdesk.exe",
+            "https://github.com/DENAYZE34/portal-remote/releases/download/1/",
+            "https://github.com/DENAYZE34/portal-remote/releases/download/1/nested/rustdesk.exe",
+            "https://github.com/DENAYZE34/portal-remote/releases/download/1/C:rustdesk.exe",
+            "https://user@github.com/DENAYZE34/portal-remote/releases/download/1/rustdesk.exe",
+            "https://github.com:443/DENAYZE34/portal-remote/releases/download/1/rustdesk.exe",
+            "https://github.com/DENAYZE34/portal-remote/releases/download/1/rustdesk.exe?download=1",
+            "https://github.com/DENAYZE34/portal-remote/releases/download/1/rustdesk.exe#download",
             "not a url",
         ] {
             assert!(get_download_file_from_url(url).is_none(), "{url}");
