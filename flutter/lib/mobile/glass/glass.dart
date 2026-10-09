@@ -51,9 +51,9 @@ class AuroraBackground extends StatelessWidget {
         );
     return Stack(children: [
       const Positioned.fill(child: ColoredBox(color: Glass.base)),
-      blob(const Alignment(-0.9, -0.85), Glass.violet, 0.5, 700),
-      blob(const Alignment(1.1, -0.2), Glass.cyan, 0.26, 620),
-      blob(const Alignment(-0.5, 1.0), Glass.violet, 0.34, 720),
+      blob(const Alignment(-1.25, -1.15), Glass.violet, 0.6, 760),
+      blob(const Alignment(1.3, -0.7), Glass.cyan, 0.34, 640),
+      blob(const Alignment(1.1, 1.2), Glass.violet, 0.4, 760),
       Positioned.fill(child: child),
     ]);
   }
