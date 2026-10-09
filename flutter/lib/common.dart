@@ -4099,6 +4099,10 @@ void checkUpdate() {
       Timer(const Duration(seconds: 1), () async {
         bind.mainGetSoftwareUpdateUrl();
       });
+      // Long-running windows learn about new releases without a restart.
+      Timer.periodic(const Duration(hours: 4), (_) {
+        bind.mainGetSoftwareUpdateUrl();
+      });
     }
   }
 }

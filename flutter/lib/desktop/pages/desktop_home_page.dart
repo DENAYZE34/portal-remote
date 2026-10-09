@@ -111,6 +111,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
         },
       ),
     ];
+    if (!bind.isCustomClient()) children.add(const _UpdateRow());
     if (isIncomingOnly) {
       children.addAll([
         Divider(),
@@ -1116,4 +1117,64 @@ void setPasswordDialog({VoidCallback? notEmptyCallback}) async {
       onCancel: close,
     );
   });
+}
+
+/// Version line with a manual "check for updates" button. The check also runs
+/// by itself on start and every few hours (see checkUpdate in common.dart).
+class _UpdateRow extends StatefulWidget {
+  const _UpdateRow();
+
+  @override
+  State<_UpdateRow> createState() => _UpdateRowState();
+}
+
+class _UpdateRowState extends State<_UpdateRow> {
+  String _version = '';
+  bool _checking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    bind.mainGetVersion().then((v) {
+      if (mounted) setState(() => _version = v);
+    });
+  }
+
+  Future<void> _check() async {
+    setState(() => _checking = true);
+    stateGlobal.updateUrl.value = '';
+    bind.mainGetSoftwareUpdateUrl();
+    await Future.delayed(const Duration(seconds: 4));
+    if (!mounted) return;
+    setState(() => _checking = false);
+    if (stateGlobal.updateUrl.value.isEmpty) {
+      showToast('Установлена последняя версия');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final style = TextStyle(
+        fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+      child: Row(children: [
+        Text(_version.isEmpty ? '' : 'Версия $_version', style: style),
+        const Spacer(),
+        if (_checking)
+          const SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2))
+        else
+          InkWell(
+            onTap: _check,
+            child: Text('Проверить обновления',
+                style: style.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w600)),
+          ),
+      ]),
+    );
+  }
 }
