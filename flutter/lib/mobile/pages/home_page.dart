@@ -74,8 +74,11 @@ class HomePageState extends State<HomePage> {
       ));
     }
     if (isAndroid && !bind.isOutgoingOnly()) {
-      _chatPageTabIndex = _pages.length;
-      _pages.addAll([ChatPage(type: ChatPageType.mobileMain), ServerPage()]);
+      if (bind.mainGetLocalOption(key: 'portal-advanced') == 'Y') {
+        _chatPageTabIndex = _pages.length;
+        _pages.add(ChatPage(type: ChatPageType.mobileMain));
+      }
+      _pages.add(ServerPage());
     }
     _pages.add(SettingsPage());
   }

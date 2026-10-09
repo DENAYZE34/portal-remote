@@ -22,6 +22,7 @@ import '../widgets/dialog.dart';
 import 'package:flutter/services.dart';
 import '../crash_log.dart';
 import '../update_check.dart';
+import '../permission_wizard.dart';
 import '../wizard.dart';
 import '../widgets/zoom_widgets.dart';
 import '../zoom_logic.dart';
@@ -788,6 +789,12 @@ class _SettingsState extends State<SettingsPage> with WidgetsBindingObserver {
                 onPressed: (context) =>
                     checkForPortalUpdate(context, manual: true)),
           SettingsTile(
+              title: const Text('Разрешения телефона'),
+              description: const Text('Что включено, чтобы телефоном можно было управлять'),
+              leading: const Icon(Icons.verified_user_outlined),
+              onPressed: (context) => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const PermissionWizardPage()))),
+          SettingsTile(
               title: const Text('Руководство по подключению'),
               leading: const Icon(Icons.help_outline),
               onPressed: (context) => showFirstRunWizard(context)),
@@ -806,7 +813,7 @@ class _SettingsState extends State<SettingsPage> with WidgetsBindingObserver {
               }),
           SettingsTile.switchTile(
             title: const Text('Показать все настройки'),
-            description: const Text('Сеть, сервер, кодеки, безопасность'),
+            description: const Text('Сеть, сервер, кодеки, безопасность, вкладка «Чат» (после перезапуска)'),
             initialValue: _advanced,
             onToggle: (v) async {
               await bind.mainSetLocalOption(
@@ -1271,7 +1278,7 @@ void showAbout(OverlayDialogManager dialogManager) {
     return CustomAlertDialog(
       title: Text(translate('About RustDesk')),
       content: Wrap(direction: Axis.vertical, spacing: 12, children: [
-        Text('Version: $version'),
+        Text('Версия: $version'),
         InkWell(
             onTap: () async {
               const url = 'https://github.com/DENAYZE34/portal-remote';
@@ -1458,7 +1465,7 @@ class __ManageTrustedDevicesState extends State<_ManageTrustedDevices> {
               return Center(child: CircularProgressIndicator());
             }
             if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
+              return Center(child: Text('Ошибка: ${snapshot.error}'));
             }
             final devices = snapshot.data as List<TrustedDevice>;
             trustedDevices = devices.obs;

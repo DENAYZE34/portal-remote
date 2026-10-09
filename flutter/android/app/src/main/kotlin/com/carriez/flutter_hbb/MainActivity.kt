@@ -392,6 +392,16 @@ class MainActivity : FlutterActivity() {
                     stopService(Intent(this, KeepAliveService::class.java))
                     result.success(true)
                 }
+                "permission_status" -> {
+                    val pm = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+                    result.success(mapOf(
+                        "accessibility" to InputService.isOpen,
+                        "capture" to MainService.isReady,
+                        "overlay" to android.provider.Settings.canDrawOverlays(this),
+                        "battery" to pm.isIgnoringBatteryOptimizations(packageName),
+                        "notifications" to androidx.core.app.NotificationManagerCompat.from(this).areNotificationsEnabled()
+                    ))
+                }
                 "open_battery_settings" -> {
                     try {
                         startActivity(Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
