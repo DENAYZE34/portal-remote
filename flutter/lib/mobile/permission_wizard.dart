@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hbb/consts.dart';
-import 'package:flutter_hbb/models/platform_model.dart';
 
 import '../common.dart';
 import 'permission_logic.dart';
@@ -39,8 +38,8 @@ class _PermissionWizardPageState extends State<PermissionWizardPage>
   Future<void> _refresh() async {
     Map<dynamic, dynamic>? status;
     try {
-      final r = await gFFI.invokeMethod('permission_status');
-      if (r is Map) status = r;
+      status = await gFFI.invokeMethodWithResult<Map<dynamic, dynamic>>(
+          'permission_status');
     } catch (_) {}
     if (mounted) setState(() => _items = permissionItems(status));
   }
