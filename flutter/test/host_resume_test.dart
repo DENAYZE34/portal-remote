@@ -1,4 +1,4 @@
-import 'package:flutter_hbb/mobile/host_resume.dart';
+import 'package:flutter_hbb/mobile/host_resume_logic.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
