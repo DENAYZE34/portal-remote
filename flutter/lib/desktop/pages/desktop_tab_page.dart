@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hbb/mobile/glass/glass.dart';
+import 'package:flutter_hbb/mobile/neon_theme.dart';
 import 'package:flutter_hbb/common.dart';
 import 'package:flutter_hbb/consts.dart';
 import 'package:flutter_hbb/desktop/pages/desktop_home_page.dart';
@@ -89,11 +91,14 @@ class _DesktopTabPageState extends State<DesktopTabPage> {
     super.dispose();
   }
 
+  Widget _aurora(Widget child) => kNeon ? AuroraBackground(child: child) : child;
+
   @override
   Widget build(BuildContext context) {
-    final tabWidget = Container(
+    final tabWidget = _aurora(Container(
         child: Scaffold(
-            backgroundColor: Theme.of(context).colorScheme.background,
+            backgroundColor:
+                kNeon ? Colors.transparent : Theme.of(context).colorScheme.background,
             body: DesktopTab(
               controller: tabController,
               tail: Offstage(
@@ -105,7 +110,7 @@ class _DesktopTabPageState extends State<DesktopTabPage> {
                   isClose: false,
                 ),
               ),
-            )));
+            ))));
     return isMacOS || kUseCompatibleUiMode
         ? tabWidget
         : Obx(

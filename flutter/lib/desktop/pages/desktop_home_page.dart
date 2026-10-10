@@ -12,6 +12,7 @@ import 'package:flutter_hbb/consts.dart';
 import 'package:flutter_hbb/desktop/pages/connection_page.dart';
 import 'package:flutter_hbb/desktop/pages/desktop_setting_page.dart';
 import 'package:flutter_hbb/desktop/pages/desktop_tab_page.dart';
+import 'package:flutter_hbb/mobile/neon_theme.dart';
 import 'package:flutter_hbb/desktop/widgets/update_progress.dart';
 import 'package:flutter_hbb/models/platform_model.dart';
 import 'package:flutter_hbb/models/server_model.dart';
@@ -111,7 +112,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
         },
       ),
     ];
-    if (!bind.isCustomClient()) children.add(const _UpdateRow());
+    children.add(const _UpdateRow());
     if (isIncomingOnly) {
       children.addAll([
         Divider(),
@@ -131,7 +132,9 @@ class _DesktopHomePageState extends State<DesktopHomePage>
       value: gFFI.serverModel,
       child: Container(
         width: isIncomingOnly ? 280.0 : 200.0,
-        color: Theme.of(context).colorScheme.background,
+        color: kNeon
+            ? Colors.white.withOpacity(0.05)
+            : Theme.of(context).colorScheme.background,
         child: Stack(
           children: [
             Column(

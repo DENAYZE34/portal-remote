@@ -6,7 +6,8 @@ import 'package:flutter/material.dart';
 bool get kNeon =>
     !kIsWeb &&
     (defaultTargetPlatform == TargetPlatform.android ||
-        defaultTargetPlatform == TargetPlatform.iOS);
+        defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.windows);
 
 class Neon {
   static const Color bg = Color(0xFF070A1F);

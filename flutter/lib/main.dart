@@ -129,10 +129,10 @@ Future<void> initEnv(String appType) async {
   if (bind.mainGetLocalOption(key: kCommConfKeyLang).isEmpty) {
     await bind.mainSetLocalOption(key: kCommConfKeyLang, value: 'ru');
   }
-  // The phone app is dark (night-navy and neon) unless the owner picks otherwise.
-  if ((isAndroid || isIOS) &&
-      bind.mainGetLocalOption(key: kCommConfKeyTheme).isEmpty) {
+  // PortalDesk is dark (night-navy and glass) once; the owner can switch later.
+  if (bind.mainGetLocalOption(key: 'portal-theme-v2') != 'Y') {
     await bind.mainSetLocalOption(key: kCommConfKeyTheme, value: 'dark');
+    await bind.mainSetLocalOption(key: 'portal-theme-v2', value: 'Y');
   }
   // await Firebase.initializeApp();
   _registerEventHandler();
